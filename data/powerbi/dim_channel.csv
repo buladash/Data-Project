@@ -1,0 +1,8 @@
+channel_id,channel_name
+1,direct
+2,email
+3,organic_search
+4,paid_search
+5,referral
+6,social_media
+7,unknown

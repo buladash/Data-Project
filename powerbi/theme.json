@@ -1,0 +1,36 @@
+{
+  "name": "Ecommerce Analytics",
+  "dataColors": [
+    "#2563EB",
+    "#059669",
+    "#7C3AED",
+    "#DC2626",
+    "#D97706",
+    "#0891B2",
+    "#DB2777",
+    "#4B5563"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#1F2937",
+  "tableAccent": "#2563EB",
+  "good": "#059669",
+  "bad": "#DC2626",
+  "neutral": "#D97706",
+  "maximum": "#2563EB",
+  "center": "#E5E7EB",
+  "minimum": "#F3F4F6",
+  "null": "#9CA3AF",
+  "textClasses": {
+    "callout": { "fontSize": 32, "color": "#1F2937" },
+    "title": { "fontSize": 14, "fontFace": "Segoe UI Semibold", "color": "#1F2937" },
+    "label": { "fontSize": 10, "color": "#374151" }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [{ "color": { "solid": { "color": "#FFFFFF" } }, "transparency": 0 }],
+        "border": [{ "show": false }]
+      }
+    }
+  }
+}

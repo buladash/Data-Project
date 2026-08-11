@@ -1,0 +1,161 @@
+product_id,product_name,category,subcategory,price,cost
+1,Vacuum Cleaner Hard Plus,Home Appliances,Vacuum Cleaners,104.28,54.57
+2,Laptop Mind Lite,Electronics,Laptops,58.88,32.55
+3,Charger Huge Plus,Accessories,Chargers,119.45,73.1
+4,Laptop Should Lite,Electronics,Laptops,262.62,
+5,Cable Hour Max,Accessories,Cables,54.02,35.66
+6,Laptop Almost Plus,Electronics,Laptops,54.02,26.43
+7,Charger Best Lite,Accessories,Chargers,276.25,153.51
+8,Cable Off Max,Accessories,Cables,133.05,94.24
+9,Game Tree Lite,Gaming,Games,43.71,20.49
+10,Charger Against Plus,Accessories,Chargers,108.67,61.85
+11,Console Work,Gaming,Consoles,43.94,20.83
+12,Game Skin,Gaming,Games,43.85,22.66
+13,Charger Myself Lite,Accessories,Chargers,82.91,43.56
+14,Kitchen Federal Pro,Home Appliances,Kitchen,11.92,7.19
+15,Game May Pro,Gaming,Games,$14.12,8.34
+16,Charger Direction Max,Accessories,Chargers,40.2,20.26
+17,Game Option,Gaming,Games,26.8,15.03
+18,Headphone Suffer Pro,Electronics,Headphones,88.48,60.36
+19,Kitchen Man Max,Home Appliances,Kitchen,29.45,14.0
+20,Laptop Article Plus,Electronics,Laptops,18.71,13.17
+21,Game Rise,Gaming,Games,249.41,162.21
+22,Controller Student Max,Gaming,Controllers,54.42,40.43
+23,Console Third Max,Gaming,Consoles,70.86,34.24
+24,Controller Paper Lite,Gaming,Controllers,18.5,13.36
+25,Console Official Plus,Gaming,Consoles,40.86,19.23
+26,Charger Expert,Accessories,Chargers,73.69,48.24
+27,Case Need Plus,Accessories,Cases,23.67,13.51
+28,Controller Difficult Lite,Gaming,Controllers,93.52,46.85
+29,Tablet Stay Plus,Electronics,Tablets,38.84,24.46
+30,Tablet Free Pro,Electronics,Tablets,51.29,36.41
+31,Charger Often Lite,Accessories,Chargers,38.8,17.53
+32,Console Executive Max,Gaming,Consoles,353.21,210.78
+33,Cable Bed Lite,Accessories,Cables,65.88,31.23
+34,Charger Conference Lite,Accessories,Chargers,25.74,15.85
+35,Camera Stop Lite,Electronics,Cameras,139.81,71.39
+36,Game Official,Gaming,Games,22.23,12.74
+37,Laptop Fall Lite,Electronics,Laptops,80.48,36.36
+38,Console Argue,Gaming,Consoles,11.43,
+39,Camera Personal Max,Electronics,Cameras,20.18,12.86
+40,Console Mr Max,Gaming,Consoles,79.61,37.62
+41,Air Conditioner Audience Pro,Home Appliances,Air Conditioners,129.62,72.45
+42,Vacuum Cleaner We Lite,Home Appliances,Vacuum Cleaners,77.81,51.09
+43,Tablet Price Lite,Electronics,Tablets,60.09,37.58
+44,Smartphone Produce,Electronics,Smartphones,50.86,23.62
+45,Laptop Face Max,Electronics,Laptops,17.63,11.66
+46,Kitchen Federal Pro,Home Appliances,Kitchen,34.89,21.8
+47,Kitchen Fall Plus,Home Appliances,Kitchen,44.05,31.53
+48,Case Fish Max,Accessories,Cases,172.67,107.96
+49,Headphone Thing Plus,Electronics,Headphones,90.85,58.5
+50,Vacuum Cleaner Marriage Pro,Home Appliances,Vacuum Cleaners,13.64,9.51
+51,Charger Citizen Plus,Accessories,Chargers,89.27,47.22
+52,Headphone Case Lite,Electronics,Headphones,$47.15,28.79
+53,Vacuum Cleaner Usually Plus,Home Appliances,Vacuum Cleaners,36.26,24.26
+54,Charger Respond Lite,Accessories,Chargers,115.64,79.62
+55,Kitchen Speak Plus,Home Appliances,Kitchen,168.66,91.17
+56,Camera Two Plus,Electronics,Cameras,154.18,72.16
+57,Tablet Compare,Electronics,Tablets,31.33,20.61
+58,Smartphone Population,Electronics,Smartphones,50.49,35.9
+59,Console How Pro,Gaming,Consoles,89.85,64.73
+60,Charger Significant Plus,Accessories,Chargers,160.45,89.39
+61,Case Establish Lite,Accessories,Cases,43.33,32.45
+62,Vacuum Cleaner Opportunity Lite,Home Appliances,Vacuum Cleaners,56.42,42.15
+63,Air Conditioner Together,Home Appliances,Air Conditioners,24.64,18.16
+64,Kitchen Myself,Home Appliances,Kitchen,22.72,16.39
+65,Smartphone Ok Plus,Electronics,Smartphones,138.56,75.56
+66,Vacuum Cleaner Cut Pro,Home Appliances,Vacuum Cleaners,226.02,158.91
+67,Vacuum Cleaner Quality Max,Home Appliances,Vacuum Cleaners,62.5,33.84
+68,Game Total Plus,Gaming,Games,164.54,75.7
+69,Charger Tend Max,Accessories,Chargers,92.34,68.72
+70,Headphone Who Max,Electronics,Headphones,37.31,27.11
+71,Case Add Pro,Accessories,Cases,-92.32,60.11
+72,Camera Bank Max,Electronics,Cameras,266.2,123.34
+73,Charger Process,Accessories,Chargers,64.57,33.19
+74,Vacuum Cleaner Democrat Plus,Home Appliances,Vacuum Cleaners,272.65,147.26
+75,Controller Order Pro,Gaming,Controllers,6.31,3.59
+76,Cable Day,Accessories,Cables,139.73,93.29
+77,Cable Fund Max,Accessories,Cables,72.12,45.14
+78,Camera State Lite,Electronics,Cameras,50.95,38.18
+79,Game Recent Pro,Gaming,Games,72.43,54.08
+80,Game Their Plus,Gaming,Games,11.15,6.35
+81,Air Conditioner Ability Max,Home Appliances,Air Conditioners,54.72,32.93
+82,Kitchen Dog,Home Appliances,Kitchen,91.96,47.26
+83,Controller Chair Max,Gaming,Controllers,252.17,
+84,Charger Wife,Accessories,Chargers,41.83,29.55
+85,Controller Listen,Gaming,Controllers,32.21,18.52
+86,Game Star Plus,Gaming,Games,42.45,20.96
+87,Headphone Guy Max,Electronics,Headphones,152.0,
+88,Vacuum Cleaner Decade Pro,Home Appliances,Vacuum Cleaners,89.65,55.62
+89,Air Conditioner Suffer Lite,Home Appliances,Air Conditioners,41.4,21.59
+90,Air Conditioner When,Home Appliances,Air Conditioners,105.84,75.69
+91,Cable Small Max,Accessories,Cables,72.77,44.68
+92,Charger Former,Accessories,Chargers,159.46,93.9
+93,Camera Ask,Electronics,Cameras,35.45,17.44
+94,Cable More Plus,Accessories,Cables,49.66,35.06
+95,Charger Choose,Accessories,Chargers,46.86,26.89
+96,Laptop Ahead,Electronics,Laptops,17.86,11.35
+97,Controller Conference Lite,Gaming,Controllers,87.05,64.54
+98,Vacuum Cleaner Attorney Max,Home Appliances,Vacuum Cleaners,84.35,
+99,Cable Visit Plus,Accessories,Cables,66.99,39.72
+100,Laptop Store Pro,Electronics,Laptops,53.99,34.26
+101,Tablet Firm,Electronics,Tablets,18.66,
+102,Kitchen Already,Home Appliances,Kitchen,45.67,32.13
+103,Headphone Population Lite,Electronics,Headphones,48.99,27.63
+104,Console Safe Pro,Gaming,Consoles,32.39,22.45
+105,Cable Story Max,Accessories,Cables,57.68,43.19
+106,Tablet Rest Lite,Electronics,Tablets,95.93,47.54
+107,Headphone Know Pro,Electronics,Headphones,364.15,216.48
+108,Kitchen Rather Max,Home Appliances,Kitchen,78.03,54.69
+109,Kitchen Heart Max,Home Appliances,Kitchen,84.08,52.3
+110,Kitchen News Lite,Home Appliances,Kitchen,62.36,35.33
+111,Cable Face,Accessories,Cables,11.86,6.58
+112,Controller Service Plus,Gaming,Controllers,65.11,35.09
+113,Cable Gun,Accessories,Cables,70.4,34.62
+114,Case Lay Pro,Accessories,Cases,612.11,446.49
+115,Headphone Fear Max,Electronics,Headphones,56.09,33.24
+116,Game Store Plus,Gaming,Games,87.48,40.95
+117,Charger Quality,Accessories,Chargers,64.64,35.4
+118,Controller Good Lite,Gaming,Controllers,23.29,11.63
+119,Headphone Television Pro,Electronics,Headphones,186.52,108.27
+120,Controller Have Plus,Gaming,Controllers,$131.2,67.95
+121,Cable Begin Max,Accessories,Cables,135.9,70.53
+122,Kitchen A,Home Appliances,Kitchen,29.42,19.31
+123,Smartphone Take Max,Electronics,Smartphones,235.69,163.65
+124,Kitchen Represent,Home Appliances,Kitchen,18.88,13.38
+125,Vacuum Cleaner Edge Plus,Home Appliances,Vacuum Cleaners,113.09,61.78
+126,Controller Sing,Gaming,Controllers,478.86,344.77
+127,Game Number Pro,Gaming,Games,27.34,18.08
+128,Console Arrive Lite,Gaming,Consoles,40.06,26.71
+129,Air Conditioner Ten Lite,Home Appliances,Air Conditioners,72.94,41.83
+130,Controller Which,Gaming,Controllers,42.39,20.96
+131,Tablet Machine,Electronics,Tablets,16.52,9.11
+132,Camera Region Max,Electronics,Cameras,70.93,39.46
+133,Console Customer Lite,Gaming,Consoles,25.63,17.25
+134,Camera Try Pro,Electronics,Cameras,102.13,65.75
+135,Kitchen Less Max,Home Appliances,Kitchen,29.15,20.63
+136,Game Accept Pro,Gaming,Games,269.06,180.48
+137,Vacuum Cleaner Company Lite,Home Appliances,Vacuum Cleaners,32.95,16.45
+138,Controller Feeling Lite,Gaming,Controllers,49.91,31.01
+139,Tablet Matter Pro,Electronics,Tablets,138.68,89.79
+140,Charger Control,Accessories,Chargers,$22.03,12.55
+141,Controller Money,Gaming,Controllers,81.84,49.44
+142,Controller Out Plus,Gaming,Controllers,216.25,139.76
+143,Game Especially Lite,Gaming,Games,15.69,11.47
+144,Case Night Max,Accessories,Cases,78.74,44.13
+145,Kitchen Heavy Pro,Home Appliances,Kitchen,84.26,39.68
+146,Camera Shoulder,Electronics,Cameras,134.78,92.41
+147,Charger Plan Pro,Accessories,Chargers,21.91,10.23
+148,Tablet Gun,Electronics,Tablets,20.32,11.72
+149,Game Key Plus,Gaming,Games,106.67,49.01
+150,Vacuum Cleaner Low Lite,Home Appliances,Vacuum Cleaners,87.12,62.36
+151,Game Identify Plus,Gaming,Games,83.55,41.15
+152,Game Letter Pro,Gaming,Games,91.09,66.36
+153,Air Conditioner Its Max,Home Appliances,Air Conditioners,36.16,23.2
+154,Vacuum Cleaner Music Plus,Home Appliances,Vacuum Cleaners,82.19,51.61
+155,Air Conditioner Listen,Home Appliances,Air Conditioners,86.81,65.05
+156,Charger Cup Lite,Accessories,Chargers,35.06,20.81
+157,Cable Country,Accessories,Cables,357.52,264.94
+158,Kitchen Choose Max,Home Appliances,Kitchen,102.15,70.32
+159,Air Conditioner Somebody Max,Home Appliances,Air Conditioners,22.82,15.95
+160,Vacuum Cleaner Entire Max,Home Appliances,Vacuum Cleaners,120.41,84.94
