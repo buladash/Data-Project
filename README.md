@@ -1,88 +1,92 @@
 # E-commerce Sales Analytics
 
-Сквозной pet-проект дата-аналитика уровня Junior+: от сырых «грязных» данных
-до дашборда. Показывает полный цикл работы аналитика — **Python/pandas**
-(генерация и очистка данных, EDA) → **SQL** (звёздная схема, бизнес-запросы,
-оконные функции) → **Power BI** (дашборд, DAX).
+An end-to-end Junior+ data analyst portfolio project: from raw "dirty" data
+to a dashboard. Demonstrates the full analyst workflow — **Python/pandas**
+(data generation and cleaning, EDA) → **SQL** (star schema, business
+queries, window functions) → **Power BI** (dashboard, DAX).
 
-> **О данных.** Датасет синтетический (сгенерирован скриптом на Faker/NumPy),
-> но намеренно спроектирован реалистично: рост бизнеса во времени, сезонность
-> (пик продаж в ноябре-декабре), Парето-распределение покупательской
-> активности (небольшая доля клиентов даёт основную часть выручки), плюс
-> целый набор типичных проблем качества данных (дубли, пропуски, разные
-> форматы дат, некорректные типы) — чтобы было что по-настоящему чистить.
-> Реальный публичный датасет не использовался, чтобы весь пайплайн был
-> воспроизводим оффлайн и не зависел от доступности внешних источников.
+> **About the data.** The dataset is synthetic (generated with a
+> Faker/NumPy script), but intentionally designed to be realistic: business
+> growth over time, seasonality (a sales peak in November-December), a
+> Pareto-style distribution of customer purchasing activity (a small share
+> of customers drives most of the revenue), plus a full set of typical data
+> quality issues (duplicates, missing values, inconsistent date formats,
+> incorrect types) — so there's something real to clean. No public dataset
+> was used, so the whole pipeline is reproducible offline and doesn't
+> depend on the availability of external sources.
 
-## Бизнес-задача
+## Business problem
 
-Интернет-магазин электроники за 2024–2025 гг. хочет понять:
+An electronics e-commerce store, 2024–2025, wants to understand:
 
-1. Как растёт выручка и есть ли сезонность?
-2. Какие товары/категории приносят больше всего денег и маржи?
-3. Какие клиенты наиболее ценны (RFM) и как хорошо они удерживаются (retention)?
-4. Какие маркетинговые каналы окупаются лучше всего (ROAS)?
+1. How is revenue growing, and is there seasonality?
+2. Which products/categories generate the most revenue and margin?
+3. Which customers are most valuable (RFM), and how well are they retained?
+4. Which marketing channels have the best ROAS?
 
-## Ключевые инсайты
+## Key insights
 
-- **Выручка выросла на ~32% в 2025 году** относительно 2024-го ($1.47M → $1.95M),
-  с выраженным сезонным пиком в ноябре-декабре (Black Friday / предновогодние покупки)
-  и просадкой в январе-феврале.
-- **~20% клиентов формируют больше половины выручки** (51%) — классическое
-  Парето-распределение ценности клиентов, сегмент `Champions` в RFM-анализе.
-  Приоритет для retention-программ и персональных предложений.
-- **Retention слабый: только ~6% клиентов возвращаются в первый месяц** после
-  покупки, к 6-му месяцу удержание падает до единичных процентов — сигнал,
-  что у магазина нет эффективной программы повторных покупок / email-триггеров.
-- **Referral и email — самые эффективные платные каналы по ROAS** (49x и 31x
-  соответственно против 3.5–4.5x у paid_search/social_media) — стоит
-  пересмотреть распределение маркетингового бюджета в их пользу.
-- **15% заказов не завершаются успешно** (9.4% отмен + 5.0% возвратов) —
-  точка роста: разобраться в причинах через дополнительный анализ по
-  категориям/способам оплаты.
-- Категория **Accessories** — лидер по выручке, но стоит проверить маржинальность
-  (см. `sql/business_questions.sql`, вопрос №4 и №14) для приоритизации закупок.
+- **Revenue grew ~32% in 2025** vs. 2024 ($1.47M → $1.95M), with a clear
+  seasonal peak in November-December (Black Friday / holiday shopping) and
+  a dip in January-February.
+- **~20% of customers generate over half of revenue** (51%) — a classic
+  Pareto distribution of customer value, the `Champions` segment in the RFM
+  analysis. A priority for retention programs and personalized offers.
+- **Retention is weak: only ~6% of customers return within the first
+  month** after purchase, dropping to single digits by month 6 — a signal
+  that the store lacks an effective repeat-purchase / email-trigger
+  program.
+- **Referral and email are the most efficient paid channels by ROAS** (49x
+  and 31x respectively, vs. 3.5–4.5x for paid_search/social_media) —
+  marketing budget allocation is worth revisiting in their favor.
+- **15% of orders don't complete successfully** (9.4% cancelled + 5.0%
+  returned) — a growth area worth investigating further by category /
+  payment method.
+- The **Accessories** category leads by revenue, but margin should be
+  checked (see `sql/business_questions.sql`, questions #4 and #14) to
+  prioritize purchasing decisions.
 
-Цифры получены в `notebooks/04_eda.ipynb` и SQL-запросах — воспроизводимы командой
-из раздела [«Как воспроизвести»](#как-воспроизвести).
+Numbers are computed in `notebooks/04_eda.ipynb` and the SQL queries —
+reproducible via the command in the [How to reproduce](#how-to-reproduce)
+section.
 
-## Стек
+## Tech stack
 
-| Этап | Инструменты |
+| Stage | Tools |
 |---|---|
-| Генерация и очистка данных | Python, pandas, NumPy, Faker |
-| Хранение / бизнес-запросы | SQLite, SQL (CTE, window functions, joins, агрегации) |
-| EDA / визуализация | pandas, matplotlib, seaborn, Jupyter |
-| BI-дашборд | Power BI (звёздная схема, DAX, time intelligence) |
+| Data generation & cleaning | Python, pandas, NumPy, Faker |
+| Storage / business queries | SQLite, SQL (CTEs, window functions, joins, aggregations) |
+| EDA / visualization | pandas, matplotlib, seaborn, Jupyter |
+| BI dashboard | Power BI (star schema, DAX, time intelligence) |
 
-## Структура репозитория
+## Repository structure
 
 ```
 Data-Project/
 ├── python/
-│   ├── 01_generate_data.py         # генерация синтетических "сырых" данных
-│   ├── 02_clean_data.py            # очистка: дубли, пропуски, типы, форматы дат
-│   ├── 03_build_star_schema.py     # звёздная схема -> SQLite + CSV для Power BI
-│   └── 04_export_powerbi_extras.py # RFM-сегменты и cohort retention для Power BI
+│   ├── 01_generate_data.py         # generates synthetic "raw" data
+│   ├── 02_clean_data.py            # cleaning: duplicates, missing values, types, date formats
+│   ├── 03_build_star_schema.py     # star schema -> SQLite + CSVs for Power BI
+│   └── 04_export_powerbi_extras.py # RFM segments and cohort retention for Power BI
 ├── notebooks/
-│   └── 04_eda.ipynb                # разведочный анализ с графиками и выводами
+│   └── 04_eda.ipynb                # exploratory analysis with charts and findings
 ├── sql/
-│   ├── schema.sql                  # DDL звёздной схемы
-│   └── business_questions.sql      # 16 бизнес-запросов (RFM, cohort, YoY, ROAS...)
+│   ├── schema.sql                  # star schema DDL
+│   └── business_questions.sql      # 16 business queries (RFM, cohorts, YoY, ROAS...)
 ├── powerbi/
-│   ├── README.md                   # пошаговая сборка дашборда, модель, DAX-меры
-│   └── theme.json                  # цветовая тема Power BI
+│   ├── README.md                   # step-by-step dashboard build, model, DAX measures
+│   └── theme.json                  # Power BI color theme
 ├── data/
-│   ├── raw/                        # сырые данные с "грязью" (для тренировки очистки)
-│   ├── processed/                  # очищенные таблицы
-│   ├── powerbi/                    # готовые CSV для импорта в Power BI
-│   └── ecommerce.db                # итоговая SQLite база (звёздная схема)
+│   ├── raw/                        # raw data with intentional issues (for cleaning practice)
+│   ├── processed/                  # cleaned tables
+│   ├── powerbi/                    # ready-to-import CSVs for Power BI
+│   └── ecommerce.db                # final SQLite database (star schema)
 └── reports/
-    ├── data_cleaning_report.md     # что и как было исправлено на этапе очистки
-    └── figures/                    # графики из EDA (PNG)
+    ├── data_cleaning_report.md     # what was fixed during cleaning, and how
+    └── figures/                    # EDA charts (PNG)
 ```
 
-## Модель данных (звёздная схема)
+## Data model (star schema)
 
 ```mermaid
 erDiagram
@@ -94,31 +98,33 @@ erDiagram
     dim_channel   ||--o{ fact_marketing_spend : channel_id
 ```
 
-`fact_orders` — гранулярность "позиция заказа", `fact_marketing_spend` —
-"день × канал". Подробности типов и связей — `sql/schema.sql`.
+`fact_orders` is grained at "order line item", `fact_marketing_spend` at
+"day × channel". See `sql/schema.sql` for column types and relationships.
 
-## Графики из EDA
+## Charts from the EDA
 
-| Динамика выручки | Retention по когортам |
+| Revenue over time | Cohort retention |
 |---|---|
 | ![monthly revenue](reports/figures/monthly_revenue.png) | ![cohort retention](reports/figures/cohort_retention.png) |
 
-| RFM-сегменты | Маркетинговые каналы |
+| RFM segments | Marketing channels |
 |---|---|
 | ![rfm segments](reports/figures/rfm_segments.png) | ![channel performance](reports/figures/channel_performance.png) |
 
-Полный ноутбук с кодом и всеми графиками — [`notebooks/04_eda.ipynb`](notebooks/04_eda.ipynb).
+Full notebook with code and all charts —
+[`notebooks/04_eda.ipynb`](notebooks/04_eda.ipynb).
 
 ## SQL
 
-16 бизнес-запросов в [`sql/business_questions.sql`](sql/business_questions.sql),
-покрывающих: агрегации и GROUP BY, JOIN нескольких таблиц, CTE, оконные функции
-(`LAG`, `RANK`, `NTILE`, `SUM() OVER`), `CASE WHEN`, `HAVING`, подзапросы.
-Примеры вопросов: RFM-сегментация, когортный retention, MoM/накопленная
-выручка, ROAS по каналам, клиенты в зоне риска оттока.
+16 business queries in
+[`sql/business_questions.sql`](sql/business_questions.sql), covering:
+aggregations and `GROUP BY`, multi-table `JOIN`s, CTEs, window functions
+(`LAG`, `RANK`, `NTILE`, `SUM() OVER`), `CASE WHEN`, `HAVING`, subqueries.
+Example questions: RFM segmentation, cohort retention, MoM / cumulative
+revenue, ROAS by channel, customers at risk of churn.
 
 ```sql
--- пример: помесячный рост выручки, оконная функция LAG
+-- example: month-over-month revenue growth, LAG window function
 WITH monthly_revenue AS (
     SELECT d.year_month, SUM(f.line_revenue) AS revenue
     FROM fact_orders f JOIN dim_date d ON f.date_key = d.date_key
@@ -133,14 +139,14 @@ FROM monthly_revenue ORDER BY year_month;
 
 ## Power BI
 
-Все данные подготовлены под ключ в `data/powerbi/` (готовая звёздная схема +
-предрасчитанные RFM-сегменты и cohort retention). Полная инструкция по сборке
-дашборда — модель связей, DAX-меры, макет из 4 страниц — в
-[`powerbi/README.md`](powerbi/README.md). `.pbix` не включён в репозиторий
-(бинарный формат, требует Power BI Desktop под Windows) — файлы и гайд
-позволяют собрать дашборд за 30–60 минут.
+All data is fully prepared in `data/powerbi/` (ready-made star schema +
+precomputed RFM segments and cohort retention). The full dashboard-build
+guide — relationship model, DAX measures, a 4-page layout — is in
+[`powerbi/README.md`](powerbi/README.md). The `.pbix` file isn't included
+in the repo (binary format, requires Power BI Desktop on Windows) — the
+files and guide let you build the dashboard in 30–60 minutes.
 
-## Как воспроизвести
+## How to reproduce
 
 ```bash
 pip install -r requirements.txt
@@ -153,12 +159,14 @@ python python/04_export_powerbi_extras.py    # -> data/powerbi/dim_customer_rfm.
 jupyter nbconvert --to notebook --execute --inplace notebooks/04_eda.ipynb
 ```
 
-SQL-запросы: открыть `data/ecommerce.db` любым SQL-клиентом (DBeaver,
-DataGrip, встроенное расширение SQLite для VS Code) и выполнить
+SQL queries: open `data/ecommerce.db` with any SQL client (DBeaver,
+DataGrip, the SQLite extension for VS Code) and run
 `sql/business_questions.sql`.
 
-## Дальнейшие шаги
+## Next steps
 
-- Добавить прогноз выручки (Prophet / statsmodels) на основе `dim_date` + `fact_orders`.
-- A/B-тест влияния маркетингового канала на retention.
-- Перейти на PostgreSQL + dbt для более "боевого" пайплайна трансформаций.
+- Add a revenue forecast (Prophet / statsmodels) based on `dim_date` +
+  `fact_orders`.
+- A/B-test the effect of a marketing channel on retention.
+- Move to PostgreSQL + dbt for a more "production-like" transformation
+  pipeline.
