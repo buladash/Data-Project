@@ -1,41 +1,41 @@
-# Отчёт об очистке данных
+# Data Cleaning Report
 
 ## customers.csv
 
-- Строк на входе: 9225
-- Удалено дублей клиентов (совпадение имени/телефона/города/канала): 225
-- Некорректных email (без @ / без домена) заменено на NaN: 124
-- Пропусков в registration_date после парсинга смешанных форматов: 0
-- Пропуски phone/city заполнены значением 'Unknown'
-- Страны приведены к единому написанию (USA/Canada/United Kingdom/Germany/France)
-- Строк на выходе: 9000
+- Rows in: 9225
+- Duplicate customers removed (matching name/phone/city/channel): 225
+- Invalid emails (no @ / no domain) replaced with NaN: 124
+- Missing registration_date after parsing mixed formats: 0
+- Missing phone/city filled with 'Unknown'
+- Countries normalized to a single spelling (USA/Canada/United Kingdom/Germany/France)
+- Rows out: 9000
 
 ## products.csv
 
-- Строк на входе: 160
-- Цена приведена к числовому типу (убран символ '$')
-- Отрицательных цен исправлено (взято по модулю): 1
-- Пропусков в cost восстановлено медианной маржой по категории: 6
-- Строк на выходе: 160
+- Rows in: 160
+- Price converted to a numeric type (stripped the '$' symbol)
+- Negative prices fixed (took the absolute value): 1
+- Missing cost backfilled via median margin per category: 6
+- Rows out: 160
 
 ## orders.csv
 
-- Строк на входе: 16160
-- Удалено полных дублей order_id: 160
-- Статус заказа приведён к нижнему регистру (completed/cancelled/returned)
-- Заказов без customer_id, привязано к суррогатному клиенту -1 (Unknown): 131
-- Заказов с некорректной/отсутствующей датой удалено: 0
-- Строк на выходе: 16000
+- Rows in: 16160
+- Exact order_id duplicates removed: 160
+- Order status normalized to lowercase (completed/cancelled/returned)
+- Orders with no customer_id, mapped to surrogate customer -1 (Unknown): 131
+- Orders with an invalid/missing date removed: 0
+- Rows out: 16000
 
 ## order_items.csv
 
-- Строк на входе: 27187
-- Отрицательное количество (ошибка ввода) исправлено по модулю: 140
-- Позиций, ссылавшихся на удалённые order_id/product_id, удалено: 0
-- Добавлен рассчитанный столбец line_revenue = qty * unit_price * (1 - discount)
-- Строк на выходе: 27187
+- Rows in: 27187
+- Negative quantities (data entry error) fixed via absolute value: 140
+- Line items referencing removed order_id/product_id, dropped: 0
+- Added computed column line_revenue = qty * unit_price * (1 - discount)
+- Rows out: 27187
 
 ## marketing_spend.csv
 
-- Строк: 2924
-- Отрицательных значений расхода скорректировано до 0: 0
+- Rows: 2924
+- Negative spend values clipped to 0: 0

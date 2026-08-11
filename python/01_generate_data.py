@@ -1,12 +1,12 @@
 """
-Генерация синтетических "сырых" данных интернет-магазина электроники.
+Generates synthetic "raw" data for an electronics e-commerce store.
 
-Датасет имитирует выгрузку из боевой БД: намеренно содержит типичные
-проблемы качества данных (дубли, пропуски, разный регистр/формат,
-некорректные типы, выбросы), чтобы дальше отработать полноценный
-пайплайн очистки в pandas (см. 02_clean_data.py).
+The dataset mimics an export from a production database: it intentionally
+contains typical data quality issues (duplicates, missing values,
+inconsistent casing/formats, incorrect types, outliers) so there's a real
+pipeline to clean afterwards in pandas (see 02_clean_data.py).
 
-Запуск:
+Run:
     python python/01_generate_data.py
 """
 
@@ -36,7 +36,7 @@ N_ORDERS = 16000
 
 CHANNELS = ["organic_search", "paid_search", "social_media", "email", "referral", "direct"]
 COUNTRIES_CLEAN = ["USA", "Canada", "United Kingdom", "Germany", "France"]
-COUNTRIES_DIRTY = {  # варианты написания одной и той же страны в сырых данных
+COUNTRIES_DIRTY = {  # different ways the same country is spelled in the raw data
     "USA": ["USA", "United States", "US", "usa", " USA "],
     "Canada": ["Canada", "CA", "canada"],
     "United Kingdom": ["United Kingdom", "UK", "U.K.", "uk"],
@@ -62,13 +62,13 @@ def random_date(start, end):
 
 
 def build_seasonal_day_weights(start, end):
-    """Веса дней для сэмплирования дат заказов: растущий бизнес + сезонность
-    (пик продаж в ноябре-декабре, спад в январе-феврале, чуть больше продаж
-    по выходным)."""
+    """Per-day sampling weights for order dates: a growing business plus
+    seasonality (a sales peak in November-December, a dip in
+    January-February, slightly more sales on weekends)."""
     days = pd.date_range(start, end, freq="D")
     n = len(days)
 
-    growth = np.linspace(0.7, 1.4, n)  # бизнес растёт за 2 года
+    growth = np.linspace(0.7, 1.4, n)  # the business grows over 2 years
 
     month_factor = {1: 0.82, 2: 0.85, 3: 0.95, 4: 1.0, 5: 1.0, 6: 0.95,
                     7: 0.92, 8: 0.95, 9: 1.0, 10: 1.05, 11: 1.45, 12: 1.6}
@@ -89,7 +89,8 @@ def sample_order_dates(n, start, end):
 
 
 def messy_date_format(dt):
-    """Возвращает дату в одном из нескольких форматов, как будто данные лили из разных систем."""
+    """Returns the date in one of several formats, as if the data had been
+    pulled from different systems."""
     fmt = random.choice(["%Y-%m-%d", "%d/%m/%Y", "%m-%d-%Y", "%Y-%m-%dT%H:%M:%S", "%d.%m.%Y"])
     return dt.strftime(fmt)
 
@@ -109,9 +110,9 @@ def generate_customers(n):
         if random.random() < 0.02:
             email = " " + email + " "
         if random.random() < 0.015:
-            email = f"{first}.{last}"  # некорректный email без домена
+            email = f"{first}.{last}"  # invalid email, no domain
 
-        phone = fake.phone_number() if random.random() > 0.12 else None  # 12% пропусков
+        phone = fake.phone_number() if random.random() > 0.12 else None  # 12% missing
         city = fake.city() if random.random() > 0.05 else None
 
         reg_date = random_date(START_DATE - timedelta(days=365), END_DATE)
@@ -132,7 +133,7 @@ def generate_customers(n):
 
     df = pd.DataFrame(rows)
 
-    # Намеренные дубликаты клиентов (тот же человек, слегка другой email/пробелы) — 2.5%
+    # Intentional customer duplicates (same person, slightly different email/whitespace) — 2.5%
     dup_n = int(n * 0.025)
     dup_rows = df.sample(dup_n, random_state=SEED).copy()
     dup_rows["customer_id"] = range(n + 1, n + 1 + dup_n)
@@ -155,9 +156,9 @@ def generate_products(n):
 
         price_field = base_price
         if random.random() < 0.03:
-            price_field = f"${base_price}"  # цена строкой с валютным символом
+            price_field = f"${base_price}"  # price as a string with a currency symbol
         if random.random() < 0.01:
-            price_field = -abs(base_price)  # отрицательная цена (ошибка выгрузки)
+            price_field = -abs(base_price)  # negative price (export error)
 
         rows.append(
             {
@@ -166,7 +167,7 @@ def generate_products(n):
                 "category": category,
                 "subcategory": subcategory,
                 "price": price_field,
-                "cost": cost if random.random() > 0.04 else None,  # 4% пропусков себестоимости
+                "cost": cost if random.random() > 0.04 else None,  # 4% missing cost
             }
         )
         pid += 1
@@ -175,9 +176,9 @@ def generate_products(n):
 
 # --------------------------------------------------------------------- ORDERS
 def build_customer_order_weights(customer_ids):
-    """Парето-подобное распределение: большинство клиентов покупают 1-2 раза,
-    небольшая доля — постоянные покупатели с многими заказами (типично для
-    реального e-commerce, ~20% клиентов дают большую часть выручки)."""
+    """Pareto-like distribution: most customers buy 1-2 times, a small
+    share are repeat buyers with many orders (typical for real e-commerce,
+    ~20% of customers drive most of the revenue)."""
     raw = np.random.pareto(a=2.2, size=len(customer_ids)) + 1
     return raw / raw.sum()
 
@@ -191,12 +192,12 @@ def generate_orders(n, customer_ids):
     for i in range(1, n + 1):
         cust_id = int(sampled_customers[i - 1])
         if random.random() < 0.008:
-            cust_id = None  # "осиротевший" заказ без клиента
+            cust_id = None  # "orphan" order with no customer
 
         order_date = order_dates[i - 1]
         status = random.choices(ORDER_STATUSES, weights=ORDER_STATUS_WEIGHTS, k=1)[0]
         if random.random() < 0.05:
-            status = status.upper()  # непоследовательный регистр
+            status = status.upper()  # inconsistent casing
 
         rows.append(
             {
@@ -211,7 +212,7 @@ def generate_orders(n, customer_ids):
 
     df = pd.DataFrame(rows)
 
-    # Дубли заказов (одна и та же строка выгружена дважды) — 1%
+    # Duplicate orders (the same row exported twice) — 1%
     dup_rows = df.sample(int(n * 0.01), random_state=SEED)
     df = pd.concat([df, dup_rows], ignore_index=True)
 
@@ -231,7 +232,7 @@ def generate_order_items(orders_df, products_df):
         for pid in chosen_products:
             qty = int(np.random.choice([1, 2, 3, 4, 5], p=[0.55, 0.25, 0.1, 0.07, 0.03]))
             if random.random() < 0.005:
-                qty = -qty  # ошибка ввода (возврат учтён отдельно статусом заказа)
+                qty = -qty  # data entry error (returns are tracked separately via order status)
 
             raw_price = product_price.get(pid, 10.0)
             try:
@@ -280,30 +281,30 @@ def generate_marketing_spend(start, end):
 
 
 def main():
-    print("Генерация клиентов...")
+    print("Generating customers...")
     customers = generate_customers(N_CUSTOMERS)
     customers.to_csv(RAW_DIR / "customers.csv", index=False)
 
-    print("Генерация товаров...")
+    print("Generating products...")
     products = generate_products(N_PRODUCTS)
     products.to_csv(RAW_DIR / "products.csv", index=False)
 
-    print("Генерация заказов...")
+    print("Generating orders...")
     orders = generate_orders(N_ORDERS, customers["customer_id"].tolist())
     orders.to_csv(RAW_DIR / "orders.csv", index=False)
 
-    print("Генерация позиций заказов...")
+    print("Generating order items...")
     order_items = generate_order_items(orders, products)
     order_items.to_csv(RAW_DIR / "order_items.csv", index=False)
 
-    print("Генерация расходов на маркетинг...")
+    print("Generating marketing spend...")
     marketing = generate_marketing_spend(START_DATE, END_DATE)
     marketing.to_csv(RAW_DIR / "marketing_spend.csv", index=False)
 
-    print("\nГотово. Файлы сохранены в data/raw/:")
+    print("\nDone. Files saved to data/raw/:")
     for f in sorted(RAW_DIR.glob("*.csv")):
         n_rows = sum(1 for _ in open(f)) - 1
-        print(f"  {f.name:<25} {n_rows:>7} строк")
+        print(f"  {f.name:<25} {n_rows:>7} rows")
 
 
 if __name__ == "__main__":

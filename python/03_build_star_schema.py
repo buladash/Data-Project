@@ -1,19 +1,19 @@
 """
-Строит звёздную схему (star schema) из очищенных таблиц (data/processed/)
-и сохраняет результат в двух видах:
+Builds a star schema from the cleaned tables (data/processed/) and saves
+the result in two forms:
 
-1. SQLite база data/ecommerce.db — для SQL-части проекта.
-2. Плоские CSV в data/powerbi/ — для прямого импорта в Power BI.
+1. SQLite database data/ecommerce.db — for the SQL part of the project.
+2. Flat CSVs in data/powerbi/ — for direct import into Power BI.
 
-Схема:
+Schema:
     dim_customers   (customer_id PK)
     dim_products    (product_id PK)
     dim_channel     (channel_id PK)
-    dim_date        (date_key PK, формат YYYYMMDD)
+    dim_date        (date_key PK, format YYYYMMDD)
     fact_orders     (order_item_id PK; FK: order_id, customer_id, product_id, date_key, channel_id)
-    fact_marketing_spend (FK: date_key, channel_id) — отдельный факт с грануляцией день/канал
+    fact_marketing_spend (FK: date_key, channel_id) — a separate fact at day/channel grain
 
-Запуск:
+Run:
     python python/03_build_star_schema.py
 """
 
@@ -112,9 +112,9 @@ def main():
     for name, df in tables.items():
         df.to_sql(name, conn, index=False)
         df.to_csv(POWERBI_DIR / f"{name}.csv", index=False)
-        print(f"  {name:<22} {len(df):>7} строк -> SQLite + data/powerbi/{name}.csv")
+        print(f"  {name:<22} {len(df):>7} rows -> SQLite + data/powerbi/{name}.csv")
 
-    # Индексы для ускорения джойнов/фильтров в SQL-части
+    # Indexes to speed up joins/filters on the SQL side
     cur = conn.cursor()
     cur.execute("CREATE INDEX idx_fact_orders_customer ON fact_orders(customer_id)")
     cur.execute("CREATE INDEX idx_fact_orders_product ON fact_orders(product_id)")
@@ -123,8 +123,8 @@ def main():
     conn.commit()
     conn.close()
 
-    print(f"\nБаза данных: {DB_PATH}")
-    print(f"CSV для Power BI: {POWERBI_DIR}")
+    print(f"\nDatabase: {DB_PATH}")
+    print(f"Power BI CSVs: {POWERBI_DIR}")
 
 
 if __name__ == "__main__":

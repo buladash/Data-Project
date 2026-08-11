@@ -1,8 +1,9 @@
 """
-Генерирует notebooks/04_eda.ipynb (nbformat) из набора ячеек, определённых
-ниже. Выполнять сам EDA удобнее в Jupyter, но, чтобы ноутбук воспроизводимо
-собирался и сразу содержал результаты выполнения (графики) для просмотра
-на GitHub, ячейки описаны здесь и notebook затем выполняется командой:
+Generates notebooks/04_eda.ipynb (nbformat) from the set of cells defined
+below. Running the EDA itself is more convenient in Jupyter, but so the
+notebook is reproducibly assembled and already contains execution output
+(charts) for viewing on GitHub, the cells are described here and the
+notebook is then executed with:
 
     python python/build_notebook.py
     jupyter nbconvert --to notebook --execute --inplace notebooks/04_eda.ipynb
@@ -24,18 +25,18 @@ def code(text):
     cells.append(nbf.v4.new_code_cell(text))
 
 
-md("""# Разведочный анализ данных (EDA) — интернет-магазин электроники
+md("""# Exploratory Data Analysis (EDA) — Electronics E-commerce Store
 
-Ноутбук отвечает на ключевые бизнес-вопросы по очищенным данным
-(`data/processed/`, звёздная схема в `data/ecommerce.db`):
+This notebook answers the key business questions against the cleaned data
+(`data/processed/`, star schema in `data/ecommerce.db`):
 
-1. Как меняется выручка во времени?
-2. Какие товары и категории приносят больше всего денег?
-3. Какие сегменты клиентов (RFM) наиболее ценны?
-4. Насколько хорошо удерживаются клиенты (cohort retention)?
-5. Какие маркетинговые каналы окупаются лучше всего (ROAS)?
+1. How does revenue change over time?
+2. Which products and categories generate the most money?
+3. Which customer segments (RFM) are the most valuable?
+4. How well are customers retained (cohort retention)?
+5. Which marketing channels have the best ROAS?
 
-Графики сохраняются в `reports/figures/` и используются в главном README.""")
+Charts are saved to `reports/figures/` and used in the main README.""")
 
 
 code("""import sqlite3
@@ -61,7 +62,7 @@ def q(sql):
 pd.options.display.float_format = "{:,.2f}".format""")
 
 
-md("## 1. Динамика выручки по месяцам")
+md("## 1. Monthly revenue trend")
 
 code("""monthly = q('''
     SELECT d.year_month,
@@ -75,11 +76,11 @@ code("""monthly = q('''
 ''')
 
 fig, ax1 = plt.subplots(figsize=(11, 5))
-ax1.plot(monthly["year_month"], monthly["revenue"], marker="o", color="#2563eb", label="Выручка")
-ax1.set_ylabel("Выручка, $")
+ax1.plot(monthly["year_month"], monthly["revenue"], marker="o", color="#2563eb", label="Revenue")
+ax1.set_ylabel("Revenue, $")
 ax1.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x/1000:.0f}K"))
 ax1.tick_params(axis="x", rotation=45)
-ax1.set_title("Выручка по месяцам, 2024–2025")
+ax1.set_title("Monthly revenue, 2024-2025")
 plt.tight_layout()
 plt.savefig(FIG_DIR / "monthly_revenue.png")
 plt.show()
@@ -87,7 +88,7 @@ plt.show()
 monthly.tail(6)""")
 
 
-md("## 2. Топ-10 товаров и выручка по категориям")
+md("## 2. Top 10 products and revenue by category")
 
 code("""top_products = q('''
     SELECT p.product_name, p.category, SUM(f.quantity) AS units_sold,
@@ -102,8 +103,8 @@ code("""top_products = q('''
 
 fig, ax = plt.subplots(figsize=(9, 5))
 sns.barplot(data=top_products, y="product_name", x="revenue", hue="category", dodge=False, ax=ax)
-ax.set_title("Топ-10 товаров по выручке")
-ax.set_xlabel("Выручка, $")
+ax.set_title("Top 10 products by revenue")
+ax.set_xlabel("Revenue, $")
 ax.set_ylabel("")
 plt.tight_layout()
 plt.savefig(FIG_DIR / "top_products.png")
@@ -121,18 +122,19 @@ code("""category_revenue = q('''
 
 fig, ax = plt.subplots(figsize=(7, 5))
 sns.barplot(data=category_revenue, x="category", y="revenue", ax=ax, color="#2563eb")
-ax.set_title("Выручка по категориям товаров")
-ax.set_ylabel("Выручка, $")
+ax.set_title("Revenue by product category")
+ax.set_ylabel("Revenue, $")
 ax.set_xlabel("")
 plt.tight_layout()
 plt.savefig(FIG_DIR / "category_revenue.png")
 plt.show()""")
 
 
-md("""## 3. RFM-сегментация клиентов
+md("""## 3. Customer RFM segmentation
 
-Recency (давность последней покупки), Frequency (число заказов),
-Monetary (сумма выручки) — считаем в pandas и делим на квартили (`qcut`).""")
+Recency (time since last purchase), Frequency (number of orders),
+Monetary (total revenue) — computed in pandas and split into quartiles
+(`qcut`).""")
 
 code("""orders_customers = q('''
     SELECT f.customer_id, f.order_id, f.line_revenue, d.date
@@ -176,8 +178,8 @@ seg_summary["revenue_share_pct"] = (seg_summary["total_revenue"] / seg_summary["
 
 fig, ax = plt.subplots(figsize=(8, 5))
 sns.barplot(data=seg_summary.reset_index(), x="segment", y="total_revenue", ax=ax, color="#7c3aed")
-ax.set_title("Выручка по RFM-сегментам клиентов")
-ax.set_ylabel("Суммарная выручка, $")
+ax.set_title("Revenue by RFM customer segment")
+ax.set_ylabel("Total revenue, $")
 ax.set_xlabel("")
 plt.xticks(rotation=20)
 plt.tight_layout()
@@ -187,7 +189,7 @@ plt.show()
 seg_summary""")
 
 
-md("## 4. Когортный анализ удержания клиентов")
+md("## 4. Cohort retention analysis")
 
 code("""cohort_base = orders_customers.copy()
 cohort_base["order_month"] = cohort_base["date"].dt.to_period("M")
@@ -205,16 +207,16 @@ cohort_size = cohort_pivot[0]
 retention = cohort_pivot.divide(cohort_size, axis=0).round(3) * 100
 
 fig, ax = plt.subplots(figsize=(9, 7))
-sns.heatmap(retention, annot=True, fmt=".0f", cmap="Blues", cbar_kws={"label": "% удержания"}, ax=ax)
-ax.set_title("Retention по когортам (месяц первой покупки)")
-ax.set_xlabel("Месяцев с первой покупки")
-ax.set_ylabel("Когорта")
+sns.heatmap(retention, annot=True, fmt=".0f", cmap="Blues", cbar_kws={"label": "% retained"}, ax=ax)
+ax.set_title("Retention by cohort (month of first purchase)")
+ax.set_xlabel("Months since first purchase")
+ax.set_ylabel("Cohort")
 plt.tight_layout()
 plt.savefig(FIG_DIR / "cohort_retention.png")
 plt.show()""")
 
 
-md("## 5. Маркетинговые каналы: расходы, выручка, ROAS")
+md("## 5. Marketing channels: spend, revenue, ROAS")
 
 code("""spend = q('''
     SELECT ch.channel_name, SUM(m.spend) AS total_spend
@@ -234,13 +236,13 @@ channel_perf = channel_perf.sort_values("total_revenue", ascending=False)
 
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 sns.barplot(data=channel_perf, y="channel_name", x="total_revenue", ax=axes[0], color="#059669")
-axes[0].set_title("Выручка по каналам")
-axes[0].set_xlabel("Выручка, $")
+axes[0].set_title("Revenue by channel")
+axes[0].set_xlabel("Revenue, $")
 axes[0].set_ylabel("")
 
 paid = channel_perf[channel_perf["total_spend"] > 0]
 sns.barplot(data=paid, y="channel_name", x="roas", ax=axes[1], color="#dc2626")
-axes[1].set_title("ROAS (выручка / расход) — платные каналы")
+axes[1].set_title("ROAS (revenue / spend) — paid channels")
 axes[1].set_xlabel("ROAS, x")
 axes[1].set_ylabel("")
 
@@ -251,10 +253,10 @@ plt.show()
 channel_perf""")
 
 
-md("""## Ключевые выводы (для README / резюме)
+md("""## Key takeaways (for the README / resume)
 
-Итоговые формулировки — см. `README.md`, раздел "Ключевые инсайты".
-Здесь фиксируются сырые цифры, на которые они опираются:""")
+Final phrasing — see `README.md`, "Key insights" section.
+The raw numbers behind them are captured here:""")
 
 code("""summary = {
     "total_revenue": round(monthly["revenue"].sum(), 2),
@@ -272,4 +274,4 @@ NB_PATH.parent.mkdir(parents=True, exist_ok=True)
 with open(NB_PATH, "w") as f:
     nbf.write(nb, f)
 
-print(f"Ноутбук создан: {NB_PATH}")
+print(f"Notebook created: {NB_PATH}")

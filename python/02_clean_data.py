@@ -1,12 +1,12 @@
 """
-Очистка "сырых" данных интернет-магазина (data/raw/) и сохранение
-готовых к анализу таблиц в data/processed/.
+Cleans the "raw" e-commerce data (data/raw/) and saves analysis-ready
+tables to data/processed/.
 
-Каждый шаг очистки логируется в отчёт reports/data_cleaning_report.md,
-чтобы объяснить (себе, ревьюеру, интервьюеру), какие проблемы были
-найдены и какое решение принято по каждой из них.
+Every cleaning step is logged to reports/data_cleaning_report.md, to
+explain (to yourself, a reviewer, an interviewer) what issues were found
+and what decision was made for each one.
 
-Запуск:
+Run:
     python python/02_clean_data.py
 """
 
@@ -21,7 +21,7 @@ REPORTS_DIR = ROOT / "reports"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-log_lines = ["# Отчёт об очистке данных\n"]
+log_lines = ["# Data Cleaning Report\n"]
 
 
 def log(section, text):
@@ -65,8 +65,8 @@ def clean_customers():
 
     n_missing_dates = int(df["registration_date"].isna().sum())
 
-    # Дубликаты: один и тот же человек попал в выгрузку дважды с другим email
-    # (customer_id и email отличаются, остальные поля совпадают).
+    # Duplicates: the same person appears twice in the export with a
+    # different email (customer_id and email differ, everything else matches).
     dup_subset = ["first_name", "last_name", "phone", "city", "country", "acquisition_channel"]
     before = len(df)
     df = df.sort_values("customer_id").drop_duplicates(subset=dup_subset, keep="first")
@@ -76,13 +76,13 @@ def clean_customers():
 
     log(
         "customers.csv",
-        f"- Строк на входе: {n_raw}\n"
-        f"- Удалено дублей клиентов (совпадение имени/телефона/города/канала): {n_dupes_removed}\n"
-        f"- Некорректных email (без @ / без домена) заменено на NaN: {n_invalid_email}\n"
-        f"- Пропусков в registration_date после парсинга смешанных форматов: {n_missing_dates}\n"
-        f"- Пропуски phone/city заполнены значением 'Unknown'\n"
-        f"- Страны приведены к единому написанию (USA/Canada/United Kingdom/Germany/France)\n"
-        f"- Строк на выходе: {len(df)}",
+        f"- Rows in: {n_raw}\n"
+        f"- Duplicate customers removed (matching name/phone/city/channel): {n_dupes_removed}\n"
+        f"- Invalid emails (no @ / no domain) replaced with NaN: {n_invalid_email}\n"
+        f"- Missing registration_date after parsing mixed formats: {n_missing_dates}\n"
+        f"- Missing phone/city filled with 'Unknown'\n"
+        f"- Countries normalized to a single spelling (USA/Canada/United Kingdom/Germany/France)\n"
+        f"- Rows out: {len(df)}",
     )
     return df
 
@@ -99,8 +99,9 @@ def clean_products():
     n_negative_price = int((df["price"] < 0).sum())
     df["price"] = df["price"].abs()
 
-    # Себестоимость: пропуски восстанавливаем через медианную маржу по категории,
-    # а не просто средним по всей таблице — так оценка точнее.
+    # Cost: missing values are backfilled via the median cost-to-price
+    # ratio per category, not a flat table-wide average — the estimate is
+    # more accurate that way.
     df["cost_to_price_ratio"] = df["cost"] / df["price"]
     median_ratio_by_cat = df.groupby("category")["cost_to_price_ratio"].transform("median")
     n_missing_cost = int(df["cost"].isna().sum())
@@ -110,11 +111,11 @@ def clean_products():
 
     log(
         "products.csv",
-        f"- Строк на входе: {n_raw}\n"
-        f"- Цена приведена к числовому типу (убран символ '$')\n"
-        f"- Отрицательных цен исправлено (взято по модулю): {n_negative_price}\n"
-        f"- Пропусков в cost восстановлено медианной маржой по категории: {n_missing_cost}\n"
-        f"- Строк на выходе: {len(df)}",
+        f"- Rows in: {n_raw}\n"
+        f"- Price converted to a numeric type (stripped the '$' symbol)\n"
+        f"- Negative prices fixed (took the absolute value): {n_negative_price}\n"
+        f"- Missing cost backfilled via median margin per category: {n_missing_cost}\n"
+        f"- Rows out: {len(df)}",
     )
     return df
 
@@ -131,8 +132,9 @@ def clean_orders(valid_customer_ids):
     df["order_date"] = parse_mixed_dates(df["order_date"])
     df["status"] = df["status"].str.lower()
 
-    # Заказы без customer_id — не выбрасываем (потеряли бы выручку в анализе),
-    # а помечаем суррогатным клиентом -1 ("Unknown"), как принято в дименсиональном моделировании.
+    # Orders with no customer_id aren't dropped (that would lose revenue in
+    # the analysis) — they're mapped to a surrogate customer -1 ("Unknown"),
+    # a standard dimensional-modeling practice.
     n_orphan = int(df["customer_id"].isna().sum())
     df["customer_id"] = df["customer_id"].apply(
         lambda x: -1 if pd.isna(x) or int(x) not in valid_customer_ids else int(x)
@@ -143,12 +145,12 @@ def clean_orders(valid_customer_ids):
 
     log(
         "orders.csv",
-        f"- Строк на входе: {n_raw}\n"
-        f"- Удалено полных дублей order_id: {n_dupes_removed}\n"
-        f"- Статус заказа приведён к нижнему регистру (completed/cancelled/returned)\n"
-        f"- Заказов без customer_id, привязано к суррогатному клиенту -1 (Unknown): {n_orphan}\n"
-        f"- Заказов с некорректной/отсутствующей датой удалено: {n_missing_dates}\n"
-        f"- Строк на выходе: {len(df)}",
+        f"- Rows in: {n_raw}\n"
+        f"- Exact order_id duplicates removed: {n_dupes_removed}\n"
+        f"- Order status normalized to lowercase (completed/cancelled/returned)\n"
+        f"- Orders with no customer_id, mapped to surrogate customer -1 (Unknown): {n_orphan}\n"
+        f"- Orders with an invalid/missing date removed: {n_missing_dates}\n"
+        f"- Rows out: {len(df)}",
     )
     return df
 
@@ -171,11 +173,11 @@ def clean_order_items(valid_order_ids, valid_product_ids):
 
     log(
         "order_items.csv",
-        f"- Строк на входе: {n_raw}\n"
-        f"- Отрицательное количество (ошибка ввода) исправлено по модулю: {n_negative_qty}\n"
-        f"- Позиций, ссылавшихся на удалённые order_id/product_id, удалено: {n_orphan_removed}\n"
-        f"- Добавлен рассчитанный столбец line_revenue = qty * unit_price * (1 - discount)\n"
-        f"- Строк на выходе: {len(df)}",
+        f"- Rows in: {n_raw}\n"
+        f"- Negative quantities (data entry error) fixed via absolute value: {n_negative_qty}\n"
+        f"- Line items referencing removed order_id/product_id, dropped: {n_orphan_removed}\n"
+        f"- Added computed column line_revenue = qty * unit_price * (1 - discount)\n"
+        f"- Rows out: {len(df)}",
     )
     return df
 
@@ -188,8 +190,8 @@ def clean_marketing_spend():
     df["spend"] = df["spend"].clip(lower=0)
     log(
         "marketing_spend.csv",
-        f"- Строк: {len(df)}\n"
-        f"- Отрицательных значений расхода скорректировано до 0: {n_negative}",
+        f"- Rows: {len(df)}\n"
+        f"- Negative spend values clipped to 0: {n_negative}",
     )
     return df
 
@@ -197,7 +199,7 @@ def clean_marketing_spend():
 def main():
     customers = clean_customers()
 
-    # Добавляем суррогатного клиента "Unknown" для заказов без привязки к клиенту
+    # Add a surrogate "Unknown" customer for orders with no customer link
     unknown_customer = pd.DataFrame([{
         "customer_id": -1, "first_name": "Unknown", "last_name": "Unknown",
         "email": np.nan, "phone": "Unknown", "city": "Unknown", "country": "Unknown",
@@ -219,8 +221,8 @@ def main():
     with open(REPORTS_DIR / "data_cleaning_report.md", "w") as f:
         f.write("".join(log_lines))
 
-    print(f"\nОчищенные таблицы сохранены в {PROCESSED_DIR}")
-    print(f"Отчёт об очистке: {REPORTS_DIR / 'data_cleaning_report.md'}")
+    print(f"\nCleaned tables saved to {PROCESSED_DIR}")
+    print(f"Cleaning report: {REPORTS_DIR / 'data_cleaning_report.md'}")
 
 
 if __name__ == "__main__":

@@ -1,11 +1,11 @@
 """
-Готовит две дополнительные таблицы для Power BI, которые проще посчитать
-в pandas один раз, чем воспроизводить сложной DAX-логикой в отчёте:
+Prepares two extra tables for Power BI that are easier to compute once in
+pandas than to reproduce with complex DAX logic in the report:
 
-  - dim_customer_rfm.csv        — RFM-сегмент на каждого клиента (1:1 к dim_customers)
-  - fact_cohort_retention.csv   — таблица retention по когортам (для матрицы/heatmap)
+  - dim_customer_rfm.csv        — RFM segment per customer (1:1 with dim_customers)
+  - fact_cohort_retention.csv   — cohort retention table (for a matrix/heatmap)
 
-Запуск:
+Run:
     python python/04_export_powerbi_extras.py
 """
 
@@ -58,7 +58,7 @@ def main():
     rfm["monetary"] = rfm["monetary"].round(2)
     rfm["rfm_segment"] = rfm.apply(segment, axis=1)
     rfm.to_csv(POWERBI_DIR / "dim_customer_rfm.csv", index=False)
-    print(f"dim_customer_rfm.csv -> {len(rfm)} строк")
+    print(f"dim_customer_rfm.csv -> {len(rfm)} rows")
 
     # ------------------------------------------------------------- COHORTS
     cohort_base = orders.copy()
@@ -87,7 +87,7 @@ def main():
     cohort_counts["cohort_month"] = cohort_counts["cohort_month"].astype(str)
 
     cohort_counts.to_csv(POWERBI_DIR / "fact_cohort_retention.csv", index=False)
-    print(f"fact_cohort_retention.csv -> {len(cohort_counts)} строк")
+    print(f"fact_cohort_retention.csv -> {len(cohort_counts)} rows")
 
 
 if __name__ == "__main__":

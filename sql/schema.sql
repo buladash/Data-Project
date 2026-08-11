@@ -1,18 +1,19 @@
 -- ============================================================================
--- Схема данных: звёздная схема (star schema) интернет-магазина электроники
+-- Data schema: star schema for an electronics e-commerce store
 -- ============================================================================
--- Совместимо с SQLite (используется в этом проекте, файл data/ecommerce.db).
--- Для PostgreSQL: заменить AUTOINCREMENT -> GENERATED ALWAYS AS IDENTITY,
--- TEXT -> VARCHAR при желании, остальной синтаксис идентичен.
+-- Compatible with SQLite (used in this project, file data/ecommerce.db).
+-- For PostgreSQL: replace AUTOINCREMENT -> GENERATED ALWAYS AS IDENTITY,
+-- TEXT -> VARCHAR if desired, the rest of the syntax is identical.
 --
--- Таблицы фактически создаются и заполняются из pandas
--- (python/03_build_star_schema.py, df.to_sql). Этот файл — эталонное
--- описание схемы для документации и для ручного разворачивания в другой СУБД.
+-- Tables are actually created and populated from pandas
+-- (python/03_build_star_schema.py, df.to_sql). This file is the reference
+-- schema description for documentation and for manually deploying to
+-- another DBMS.
 -- ============================================================================
 
 -- -------------------------------------------------------------- dim_customers
 CREATE TABLE dim_customers (
-    customer_id            INTEGER PRIMARY KEY,   -- -1 = суррогатный "Unknown" клиент
+    customer_id            INTEGER PRIMARY KEY,   -- -1 = surrogate "Unknown" customer
     first_name             TEXT,
     last_name              TEXT,
     full_name              TEXT,
@@ -52,14 +53,14 @@ CREATE TABLE dim_date (
     month         INTEGER,
     month_name    TEXT,
     day           INTEGER,
-    day_of_week   INTEGER,               -- 1 = понедельник
+    day_of_week   INTEGER,               -- 1 = Monday
     day_name      TEXT,
     is_weekend    BOOLEAN,
     year_month    TEXT                   -- 'YYYY-MM'
 );
 
 -- ----------------------------------------------------------------- fact_orders
--- Гранулярность: одна строка = одна позиция заказа (order line item)
+-- Grain: one row = one order line item
 CREATE TABLE fact_orders (
     order_item_id  INTEGER PRIMARY KEY,
     order_id       INTEGER,
@@ -69,15 +70,15 @@ CREATE TABLE fact_orders (
     channel_id     INTEGER REFERENCES dim_channel(channel_id),
     quantity       INTEGER,
     unit_price     REAL,
-    discount       REAL,          -- доля скидки, 0.1 = 10%
+    discount       REAL,          -- discount share, 0.1 = 10%
     line_revenue   REAL,          -- quantity * unit_price * (1 - discount)
     order_status   TEXT,          -- completed / cancelled / returned
     payment_method TEXT
 );
 
 -- ------------------------------------------------------- fact_marketing_spend
--- Гранулярность: день x канал (отдельный факт с другой гранулярностью,
--- связан с теми же dim_date / dim_channel — классический паттерн star schema)
+-- Grain: day x channel (a separate fact at a different grain, linked to
+-- the same dim_date / dim_channel — a classic star schema pattern)
 CREATE TABLE fact_marketing_spend (
     date_key    INTEGER REFERENCES dim_date(date_key),
     channel_id  INTEGER REFERENCES dim_channel(channel_id),

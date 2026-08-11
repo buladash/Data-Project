@@ -1,17 +1,17 @@
 -- ============================================================================
--- Бизнес-вопросы к данным интернет-магазина (data/ecommerce.db)
+-- Business questions against the e-commerce data (data/ecommerce.db)
 -- ============================================================================
--- Выполнить: sqlite3 data/ecommerce.db < sql/business_questions.sql
--- либо построчно в любом SQL-клиенте / DBeaver / DataGrip.
+-- Run: sqlite3 data/ecommerce.db < sql/business_questions.sql
+-- or run each query individually in any SQL client / DBeaver / DataGrip.
 --
--- Все запросы учитывают только успешно завершённые заказы
--- (order_status = 'completed'), если явно не сказано иное — так выручка
--- не искажается отменами и возвратами.
+-- All queries only count successfully completed orders
+-- (order_status = 'completed') unless stated otherwise — so revenue isn't
+-- distorted by cancellations and returns.
 -- ============================================================================
 
 
 -- ----------------------------------------------------------------------------
--- 1. Выручка, число заказов и средний чек (AOV) по месяцам
+-- 1. Revenue, order count, and average order value (AOV) by month
 -- ----------------------------------------------------------------------------
 SELECT
     d.year_month,
@@ -26,7 +26,7 @@ ORDER BY d.year_month;
 
 
 -- ----------------------------------------------------------------------------
--- 2. Помесячный рост выручки (MoM, %) — оконная функция LAG
+-- 2. Month-over-month revenue growth (MoM, %) — LAG window function
 -- ----------------------------------------------------------------------------
 WITH monthly_revenue AS (
     SELECT d.year_month, SUM(f.line_revenue) AS revenue
@@ -48,7 +48,7 @@ ORDER BY year_month;
 
 
 -- ----------------------------------------------------------------------------
--- 3. Топ-10 товаров по выручке
+-- 3. Top 10 products by revenue
 -- ----------------------------------------------------------------------------
 SELECT
     p.product_name,
@@ -64,7 +64,7 @@ LIMIT 10;
 
 
 -- ----------------------------------------------------------------------------
--- 4. Выручка и маржа по категориям товаров
+-- 4. Revenue and margin by product category
 -- ----------------------------------------------------------------------------
 SELECT
     p.category,
@@ -82,7 +82,7 @@ ORDER BY revenue DESC;
 
 
 -- ----------------------------------------------------------------------------
--- 5. RFM-сегментация клиентов (Recency, Frequency, Monetary)
+-- 5. Customer RFM segmentation (Recency, Frequency, Monetary)
 -- ----------------------------------------------------------------------------
 WITH customer_orders AS (
     SELECT
@@ -101,7 +101,7 @@ rfm_scores AS (
         CAST(julianday((SELECT MAX(date) FROM dim_date)) - julianday(last_order_date) AS INTEGER) AS recency_days,
         frequency,
         ROUND(monetary, 2) AS monetary,
-        NTILE(4) OVER (ORDER BY julianday(last_order_date) DESC) AS r_score,  -- 4 = самые недавние
+        NTILE(4) OVER (ORDER BY julianday(last_order_date) DESC) AS r_score,  -- 4 = most recent
         NTILE(4) OVER (ORDER BY frequency ASC)                   AS f_score,
         NTILE(4) OVER (ORDER BY monetary ASC)                    AS m_score
     FROM customer_orders
@@ -125,7 +125,7 @@ LIMIT 20;
 
 
 -- ----------------------------------------------------------------------------
--- 6. Когортный анализ удержания (retention) по месяцу первой покупки
+-- 6. Cohort retention analysis by month of first purchase
 -- ----------------------------------------------------------------------------
 WITH first_purchase AS (
     SELECT customer_id, MIN(d.year_month) AS cohort_month
@@ -166,7 +166,7 @@ ORDER BY o.cohort_month, o.month_offset;
 
 
 -- ----------------------------------------------------------------------------
--- 7. Доля повторных покупателей (repeat purchase rate)
+-- 7. Repeat purchase rate
 -- ----------------------------------------------------------------------------
 WITH orders_per_customer AS (
     SELECT customer_id, COUNT(DISTINCT order_id) AS n_orders
@@ -182,7 +182,7 @@ FROM orders_per_customer;
 
 
 -- ----------------------------------------------------------------------------
--- 8. Топ-15 клиентов по LTV (пожизненной ценности) — оконная функция RANK
+-- 8. Top 15 customers by LTV (lifetime value) — RANK window function
 -- ----------------------------------------------------------------------------
 SELECT *
 FROM (
@@ -203,7 +203,7 @@ ORDER BY ltv_rank;
 
 
 -- ----------------------------------------------------------------------------
--- 9. Доля заказов по статусам (completed / cancelled / returned)
+-- 9. Share of orders by status (completed / cancelled / returned)
 -- ----------------------------------------------------------------------------
 SELECT
     order_status,
@@ -215,7 +215,7 @@ ORDER BY orders_count DESC;
 
 
 -- ----------------------------------------------------------------------------
--- 10. Маркетинг: расход и выручка по каналам, приблизительный ROAS
+-- 10. Marketing: spend and revenue by channel, approximate ROAS
 -- ----------------------------------------------------------------------------
 WITH spend_by_channel AS (
     SELECT ch.channel_name, ROUND(SUM(m.spend), 2) AS total_spend
@@ -236,14 +236,14 @@ SELECT
     COALESCE(s.total_spend, 0)                                             AS total_spend,
     CASE WHEN s.total_spend > 0
          THEN ROUND(r.total_revenue / s.total_spend, 2)
-         ELSE NULL END                                                     AS roas   -- выручка на 1 у.е. расходов
+         ELSE NULL END                                                     AS roas   -- revenue per 1 unit of spend
 FROM revenue_by_channel r
 LEFT JOIN spend_by_channel s ON r.channel_name = s.channel_name
 ORDER BY r.total_revenue DESC;
 
 
 -- ----------------------------------------------------------------------------
--- 11. Средний чек по способу оплаты
+-- 11. Average order value by payment method
 -- ----------------------------------------------------------------------------
 SELECT
     payment_method,
@@ -256,7 +256,7 @@ ORDER BY avg_order_value DESC;
 
 
 -- ----------------------------------------------------------------------------
--- 12. Выручка по странам клиентов
+-- 12. Revenue by customer country
 -- ----------------------------------------------------------------------------
 SELECT
     c.country,
@@ -270,7 +270,7 @@ ORDER BY revenue DESC;
 
 
 -- ----------------------------------------------------------------------------
--- 13. Накопленная (running total) выручка по месяцам
+-- 13. Cumulative (running total) revenue by month
 -- ----------------------------------------------------------------------------
 WITH monthly_revenue AS (
     SELECT d.year_month, SUM(f.line_revenue) AS revenue
@@ -288,7 +288,7 @@ ORDER BY year_month;
 
 
 -- ----------------------------------------------------------------------------
--- 14. Топ-10 товаров по маржинальности (% margin), продано хотя бы 20 шт.
+-- 14. Top 10 products by margin (% margin), at least 20 units sold
 -- ----------------------------------------------------------------------------
 SELECT
     p.product_name,
@@ -305,8 +305,8 @@ LIMIT 10;
 
 
 -- ----------------------------------------------------------------------------
--- 15. Клиенты "в зоне риска оттока": последняя покупка > 90 дней назад,
---     но раньше покупали 2+ раза (были ценными)
+-- 15. Customers "at risk of churn": last purchase > 90 days ago, but
+--     previously ordered 2+ times (were valuable)
 -- ----------------------------------------------------------------------------
 WITH customer_stats AS (
     SELECT
@@ -336,7 +336,7 @@ LIMIT 20;
 
 
 -- ----------------------------------------------------------------------------
--- 16. Выручка по дням недели (где чаще всего покупают)
+-- 16. Revenue by day of week (when customers buy the most)
 -- ----------------------------------------------------------------------------
 SELECT
     d.day_name,
