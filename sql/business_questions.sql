@@ -1,350 +1,147 @@
--- ============================================================================
--- Business questions against the e-commerce data (data/ecommerce.db)
--- ============================================================================
--- Run: sqlite3 data/ecommerce.db < sql/business_questions.sql
--- or run each query individually in any SQL client / DBeaver / DataGrip.
---
--- All queries only count successfully completed orders
--- (order_status = 'completed') unless stated otherwise — so revenue isn't
--- distorted by cancellations and returns.
--- ============================================================================
+
+-- Business questions against the e-commerce data (ecommerce.db)
 
 
--- ----------------------------------------------------------------------------
--- 1. Revenue, order count, and average order value (AOV) by month
--- ----------------------------------------------------------------------------
-SELECT
-    d.year_month,
-    ROUND(SUM(f.line_revenue), 2)                              AS revenue,
-    COUNT(DISTINCT f.order_id)                                 AS orders_count,
-    ROUND(SUM(f.line_revenue) * 1.0 / COUNT(DISTINCT f.order_id), 2) AS avg_order_value
-FROM fact_orders f
-JOIN dim_date d ON f.date_key = d.date_key
-WHERE f.order_status = 'completed'
-GROUP BY d.year_month
-ORDER BY d.year_month;
 
+-- 1. Preview: first 10 rows of dim_products
 
--- ----------------------------------------------------------------------------
--- 2. Month-over-month revenue growth (MoM, %) — LAG window function
--- ----------------------------------------------------------------------------
-WITH monthly_revenue AS (
-    SELECT d.year_month, SUM(f.line_revenue) AS revenue
-    FROM fact_orders f
-    JOIN dim_date d ON f.date_key = d.date_key
-    WHERE f.order_status = 'completed'
-    GROUP BY d.year_month
-)
-SELECT
-    year_month,
-    ROUND(revenue, 2) AS revenue,
-    ROUND(revenue - LAG(revenue) OVER (ORDER BY year_month), 2) AS revenue_change,
-    ROUND(
-        (revenue - LAG(revenue) OVER (ORDER BY year_month)) * 100.0
-        / LAG(revenue) OVER (ORDER BY year_month), 1
-    ) AS mom_growth_pct
-FROM monthly_revenue
-ORDER BY year_month;
-
-
--- ----------------------------------------------------------------------------
--- 3. Top 10 products by revenue
--- ----------------------------------------------------------------------------
-SELECT
-    p.product_name,
-    p.category,
-    SUM(f.quantity)                    AS units_sold,
-    ROUND(SUM(f.line_revenue), 2)      AS revenue
-FROM fact_orders f
-JOIN dim_products p ON f.product_id = p.product_id
-WHERE f.order_status = 'completed'
-GROUP BY p.product_id, p.product_name, p.category
-ORDER BY revenue DESC
+SELECT *
+FROM dim_products
 LIMIT 10;
 
 
--- ----------------------------------------------------------------------------
--- 4. Revenue and margin by product category
--- ----------------------------------------------------------------------------
+-- 2. Product names and prices only
+
+SELECT product_name, price
+FROM dim_products;
+
+
+-- 3. Products in the Gaming category
+
+SELECT *
+FROM dim_products
+WHERE category = 'Gaming';
+
+
+-- 4. Products sorted by price, most expensive first
+
+SELECT product_name, price
+FROM dim_products
+ORDER BY price DESC;
+
+
+-- 5. Product count, average price and average cost by category
+
 SELECT
-    p.category,
-    ROUND(SUM(f.line_revenue), 2)                                       AS revenue,
-    ROUND(SUM(f.quantity * (f.unit_price * (1 - f.discount) - p.cost)), 2) AS estimated_profit,
-    ROUND(
-        SUM(f.quantity * (f.unit_price * (1 - f.discount) - p.cost)) * 100.0
-        / SUM(f.line_revenue), 1
-    ) AS profit_margin_pct
+    category,
+    COUNT(*) AS count,
+    AVG(price) AS avg_price,
+    AVG(cost) AS avg_cost
+FROM dim_products
+GROUP BY category
+ORDER BY AVG(price) DESC;
+
+
+-- 6. Order line items joined with product details
+
+SELECT f.quantity, f.unit_price, d.product_name, d.category
 FROM fact_orders f
-JOIN dim_products p ON f.product_id = p.product_id
-WHERE f.order_status = 'completed'
-GROUP BY p.category
-ORDER BY revenue DESC;
+JOIN dim_products d ON f.product_id = d.product_id
+LIMIT 15;
 
 
--- ----------------------------------------------------------------------------
--- 5. Customer RFM segmentation (Recency, Frequency, Monetary)
--- ----------------------------------------------------------------------------
-WITH customer_orders AS (
-    SELECT
-        f.customer_id,
-        MAX(d.date)                    AS last_order_date,
-        COUNT(DISTINCT f.order_id)     AS frequency,
-        SUM(f.line_revenue)            AS monetary
+-- 7. Revenue by product category (completed orders only)
+
+SELECT ROUND(SUM(f.line_revenue), 2) AS revenue, d.category
+FROM fact_orders f
+JOIN dim_products d ON f.product_id = d.product_id
+WHERE status = 'completed'
+GROUP BY category
+ORDER BY SUM(line_revenue) DESC;
+
+
+-- 8. Revenue by month
+
+SELECT ROUND(SUM(f.line_revenue), 2) AS revenue, d.year, d.month
+FROM fact_orders f
+JOIN dim_date d ON f.date_key = d.date_key
+WHERE status = 'completed'
+GROUP BY year, month
+ORDER BY year, month;
+
+
+-- 9. Revenue by month, rewritten as a CTE
+
+WITH monthly_revenue AS (
+    SELECT ROUND(SUM(f.line_revenue), 2) AS revenue, d.year, d.month
     FROM fact_orders f
     JOIN dim_date d ON f.date_key = d.date_key
-    WHERE f.order_status = 'completed' AND f.customer_id <> -1
-    GROUP BY f.customer_id
-),
-rfm_scores AS (
+    WHERE status = 'completed'
+    GROUP BY year, month
+)
+SELECT * FROM monthly_revenue
+ORDER BY year, month;
+
+
+-- 10. Month-over-month revenue growth, %  (LAG window function)
+
+WITH monthly_revenue AS (
     SELECT
-        customer_id,
-        CAST(julianday((SELECT MAX(date) FROM dim_date)) - julianday(last_order_date) AS INTEGER) AS recency_days,
-        frequency,
-        ROUND(monetary, 2) AS monetary,
-        NTILE(4) OVER (ORDER BY julianday(last_order_date) DESC) AS r_score,  -- 4 = most recent
-        NTILE(4) OVER (ORDER BY frequency ASC)                   AS f_score,
-        NTILE(4) OVER (ORDER BY monetary ASC)                    AS m_score
-    FROM customer_orders
+        d.year,
+        d.month,
+        ROUND(SUM(f.line_revenue), 2) AS revenue
+    FROM fact_orders f
+    JOIN dim_date d ON f.date_key = d.date_key
+    WHERE f.status = 'completed'
+    GROUP BY d.year, d.month
+)
+SELECT
+    year, month, revenue,
+    LAG(revenue) OVER (ORDER BY year, month) AS prev_month_revenue,
+    ROUND(
+        (revenue - LAG(revenue) OVER (ORDER BY year, month))
+        / LAG(revenue) OVER (ORDER BY year, month) * 100, 1
+    ) AS mom_growth_pct
+FROM monthly_revenue
+ORDER BY year, month;
+
+
+-- 11. Top 10 customers by revenue, excluding the surrogate "Unknown" customer
+--     (RANK window function)
+
+WITH customer_revenue AS (
+    SELECT
+        a.customer_id,
+        SUM(a.line_revenue) AS total_revenue
+    FROM fact_orders a
+    JOIN dim_customers b ON a.customer_id = b.customer_id
+    WHERE status = 'completed' AND a.customer_id <> -1
+    GROUP BY a.customer_id
 )
 SELECT
     customer_id,
-    recency_days,
-    frequency,
-    monetary,
-    r_score, f_score, m_score,
-    CASE
-        WHEN r_score >= 3 AND f_score >= 3 AND m_score >= 3 THEN 'Champions'
-        WHEN r_score >= 3 AND f_score <= 2                  THEN 'New / Promising'
-        WHEN r_score <= 2 AND f_score >= 3 AND m_score >= 3 THEN 'At Risk (Valuable)'
-        WHEN r_score <= 2 AND f_score <= 2                  THEN 'Lost / Hibernating'
-        ELSE 'Regular'
-    END AS rfm_segment
-FROM rfm_scores
-ORDER BY monetary DESC
-LIMIT 20;
-
-
--- ----------------------------------------------------------------------------
--- 6. Cohort retention analysis by month of first purchase
--- ----------------------------------------------------------------------------
-WITH first_purchase AS (
-    SELECT customer_id, MIN(d.year_month) AS cohort_month
-    FROM fact_orders f
-    JOIN dim_date d ON f.date_key = d.date_key
-    WHERE f.order_status = 'completed' AND f.customer_id <> -1
-    GROUP BY customer_id
-),
-orders_with_cohort AS (
-    SELECT
-        f.customer_id,
-        fp.cohort_month,
-        d.year_month AS order_month,
-        (CAST(SUBSTR(d.year_month, 1, 4) AS INTEGER) - CAST(SUBSTR(fp.cohort_month, 1, 4) AS INTEGER)) * 12
-            + (CAST(SUBSTR(d.year_month, 6, 2) AS INTEGER) - CAST(SUBSTR(fp.cohort_month, 6, 2) AS INTEGER))
-            AS month_offset
-    FROM fact_orders f
-    JOIN dim_date d ON f.date_key = d.date_key
-    JOIN first_purchase fp ON f.customer_id = fp.customer_id
-    WHERE f.order_status = 'completed' AND f.customer_id <> -1
-),
-cohort_size AS (
-    SELECT cohort_month, COUNT(DISTINCT customer_id) AS cohort_customers
-    FROM first_purchase
-    GROUP BY cohort_month
-)
-SELECT
-    o.cohort_month,
-    o.month_offset,
-    COUNT(DISTINCT o.customer_id)                                          AS active_customers,
-    cs.cohort_customers,
-    ROUND(COUNT(DISTINCT o.customer_id) * 100.0 / cs.cohort_customers, 1)  AS retention_pct
-FROM orders_with_cohort o
-JOIN cohort_size cs ON o.cohort_month = cs.cohort_month
-WHERE o.month_offset BETWEEN 0 AND 6
-GROUP BY o.cohort_month, o.month_offset, cs.cohort_customers
-ORDER BY o.cohort_month, o.month_offset;
-
-
--- ----------------------------------------------------------------------------
--- 7. Repeat purchase rate
--- ----------------------------------------------------------------------------
-WITH orders_per_customer AS (
-    SELECT customer_id, COUNT(DISTINCT order_id) AS n_orders
-    FROM fact_orders
-    WHERE order_status = 'completed' AND customer_id <> -1
-    GROUP BY customer_id
-)
-SELECT
-    COUNT(*)                                             AS total_customers,
-    SUM(CASE WHEN n_orders > 1 THEN 1 ELSE 0 END)         AS repeat_customers,
-    ROUND(SUM(CASE WHEN n_orders > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS repeat_rate_pct
-FROM orders_per_customer;
-
-
--- ----------------------------------------------------------------------------
--- 8. Top 15 customers by LTV (lifetime value) — RANK window function
--- ----------------------------------------------------------------------------
-SELECT *
-FROM (
-    SELECT
-        c.customer_id,
-        c.full_name,
-        c.country,
-        ROUND(SUM(f.line_revenue), 2)               AS lifetime_value,
-        COUNT(DISTINCT f.order_id)                   AS orders_count,
-        RANK() OVER (ORDER BY SUM(f.line_revenue) DESC) AS ltv_rank
-    FROM fact_orders f
-    JOIN dim_customers c ON f.customer_id = c.customer_id
-    WHERE f.order_status = 'completed' AND c.customer_id <> -1
-    GROUP BY c.customer_id, c.full_name, c.country
-)
-WHERE ltv_rank <= 15
-ORDER BY ltv_rank;
-
-
--- ----------------------------------------------------------------------------
--- 9. Share of orders by status (completed / cancelled / returned)
--- ----------------------------------------------------------------------------
-SELECT
-    order_status,
-    COUNT(DISTINCT order_id)                                                    AS orders_count,
-    ROUND(COUNT(DISTINCT order_id) * 100.0 / (SELECT COUNT(DISTINCT order_id) FROM fact_orders), 1) AS pct_of_total
-FROM fact_orders
-GROUP BY order_status
-ORDER BY orders_count DESC;
-
-
--- ----------------------------------------------------------------------------
--- 10. Marketing: spend and revenue by channel, approximate ROAS
--- ----------------------------------------------------------------------------
-WITH spend_by_channel AS (
-    SELECT ch.channel_name, ROUND(SUM(m.spend), 2) AS total_spend
-    FROM fact_marketing_spend m
-    JOIN dim_channel ch ON m.channel_id = ch.channel_id
-    GROUP BY ch.channel_name
-),
-revenue_by_channel AS (
-    SELECT ch.channel_name, ROUND(SUM(f.line_revenue), 2) AS total_revenue
-    FROM fact_orders f
-    JOIN dim_channel ch ON f.channel_id = ch.channel_id
-    WHERE f.order_status = 'completed'
-    GROUP BY ch.channel_name
-)
-SELECT
-    r.channel_name,
-    r.total_revenue,
-    COALESCE(s.total_spend, 0)                                             AS total_spend,
-    CASE WHEN s.total_spend > 0
-         THEN ROUND(r.total_revenue / s.total_spend, 2)
-         ELSE NULL END                                                     AS roas   -- revenue per 1 unit of spend
-FROM revenue_by_channel r
-LEFT JOIN spend_by_channel s ON r.channel_name = s.channel_name
-ORDER BY r.total_revenue DESC;
-
-
--- ----------------------------------------------------------------------------
--- 11. Average order value by payment method
--- ----------------------------------------------------------------------------
-SELECT
-    payment_method,
-    COUNT(DISTINCT order_id)                                          AS orders_count,
-    ROUND(SUM(line_revenue) / COUNT(DISTINCT order_id), 2)            AS avg_order_value
-FROM fact_orders
-WHERE order_status = 'completed'
-GROUP BY payment_method
-ORDER BY avg_order_value DESC;
-
-
--- ----------------------------------------------------------------------------
--- 12. Revenue by customer country
--- ----------------------------------------------------------------------------
-SELECT
-    c.country,
-    ROUND(SUM(f.line_revenue), 2) AS revenue,
-    ROUND(SUM(f.line_revenue) * 100.0 / SUM(SUM(f.line_revenue)) OVER (), 1) AS pct_of_total
-FROM fact_orders f
-JOIN dim_customers c ON f.customer_id = c.customer_id
-WHERE f.order_status = 'completed'
-GROUP BY c.country
-ORDER BY revenue DESC;
-
-
--- ----------------------------------------------------------------------------
--- 13. Cumulative (running total) revenue by month
--- ----------------------------------------------------------------------------
-WITH monthly_revenue AS (
-    SELECT d.year_month, SUM(f.line_revenue) AS revenue
-    FROM fact_orders f
-    JOIN dim_date d ON f.date_key = d.date_key
-    WHERE f.order_status = 'completed'
-    GROUP BY d.year_month
-)
-SELECT
-    year_month,
-    ROUND(revenue, 2) AS revenue,
-    ROUND(SUM(revenue) OVER (ORDER BY year_month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), 2) AS cumulative_revenue
-FROM monthly_revenue
-ORDER BY year_month;
-
-
--- ----------------------------------------------------------------------------
--- 14. Top 10 products by margin (% margin), at least 20 units sold
--- ----------------------------------------------------------------------------
-SELECT
-    p.product_name,
-    p.category,
-    p.margin_pct,
-    SUM(f.quantity) AS units_sold
-FROM fact_orders f
-JOIN dim_products p ON f.product_id = p.product_id
-WHERE f.order_status = 'completed'
-GROUP BY p.product_id, p.product_name, p.category, p.margin_pct
-HAVING SUM(f.quantity) >= 20
-ORDER BY p.margin_pct DESC
+    total_revenue,
+    RANK() OVER (ORDER BY total_revenue DESC) AS revenue_rank
+FROM customer_revenue
+ORDER BY total_revenue DESC
 LIMIT 10;
 
 
--- ----------------------------------------------------------------------------
--- 15. Customers "at risk of churn": last purchase > 90 days ago, but
---     previously ordered 2+ times (were valuable)
--- ----------------------------------------------------------------------------
-WITH customer_stats AS (
+-- 12. Customers split into revenue quartiles (Monetary, for RFM segmentation)
+--     Quartile 4 = highest-value customers  (NTILE window function)
+
+WITH customer_revenue AS (
     SELECT
-        f.customer_id,
-        MAX(d.date)                AS last_order_date,
-        COUNT(DISTINCT f.order_id) AS orders_count,
-        SUM(f.line_revenue)        AS lifetime_value
-    FROM fact_orders f
-    JOIN dim_date d ON f.date_key = d.date_key
-    WHERE f.order_status = 'completed' AND f.customer_id <> -1
-    GROUP BY f.customer_id
-),
-max_date AS (SELECT MAX(date) AS d FROM dim_date WHERE date_key IN (SELECT date_key FROM fact_orders))
+        a.customer_id,
+        SUM(a.line_revenue) AS total_revenue
+    FROM fact_orders a
+    JOIN dim_customers b ON a.customer_id = b.customer_id
+    WHERE status = 'completed' AND a.customer_id <> -1
+    GROUP BY a.customer_id
+)
 SELECT
-    cs.customer_id,
-    c.full_name,
-    cs.last_order_date,
-    CAST(julianday((SELECT d FROM max_date)) - julianday(cs.last_order_date) AS INTEGER) AS days_since_last_order,
-    cs.orders_count,
-    ROUND(cs.lifetime_value, 2) AS lifetime_value
-FROM customer_stats cs
-JOIN dim_customers c ON cs.customer_id = c.customer_id
-WHERE cs.orders_count >= 2
-  AND julianday((SELECT d FROM max_date)) - julianday(cs.last_order_date) > 90
-ORDER BY cs.lifetime_value DESC
-LIMIT 20;
-
-
--- ----------------------------------------------------------------------------
--- 16. Revenue by day of week (when customers buy the most)
--- ----------------------------------------------------------------------------
-SELECT
-    d.day_name,
-    d.day_of_week,
-    ROUND(SUM(f.line_revenue), 2)  AS revenue,
-    COUNT(DISTINCT f.order_id)     AS orders_count
-FROM fact_orders f
-JOIN dim_date d ON f.date_key = d.date_key
-WHERE f.order_status = 'completed'
-GROUP BY d.day_name, d.day_of_week
-ORDER BY d.day_of_week;
+    customer_id,
+    total_revenue,
+    NTILE(4) OVER (ORDER BY total_revenue) AS revenue_quartile
+FROM customer_revenue
+ORDER BY total_revenue;
