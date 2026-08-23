@@ -46,17 +46,13 @@ An electronics e-commerce store, 2024–2025, wants to understand:
   checked (see `sql/business_questions.sql`, questions #4 and #14) to
   prioritize purchasing decisions.
 
-Numbers are computed in `notebooks/04_eda.ipynb` and the SQL queries —
-reproducible via the command in the [How to reproduce](#how-to-reproduce)
-section.
-
 ## Tech stack
 
 | Stage | Tools |
 |---|---|
 | Data generation & cleaning | Python, pandas, NumPy, Faker |
 | Storage / business queries | SQLite, SQL (CTEs, window functions, joins, aggregations) |
-| EDA / visualization | pandas, matplotlib, seaborn, Jupyter |
+| EDA / visualization | pandas, matplotlib|
 | BI dashboard | Power BI (star schema, DAX, time intelligence) |
 
 ## Repository structure
@@ -68,8 +64,6 @@ Data-Project/
 │   ├── 02_clean_data.py            # cleaning: duplicates, missing values, types, date formats
 │   ├── 03_build_star_schema.py     # star schema -> SQLite + CSVs for Power BI
 │   └── 04_export_powerbi_extras.py # RFM segments and cohort retention for Power BI
-├── notebooks/
-│   └── 04_eda.ipynb                # exploratory analysis with charts and findings
 ├── sql/
 │   ├── schema.sql                  # star schema DDL
 │   └── business_questions.sql      # 16 business queries (RFM, cohorts, YoY, ROAS...)
