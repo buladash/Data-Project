@@ -101,18 +101,6 @@ erDiagram
 `fact_orders` is grained at "order line item", `fact_marketing_spend` at
 "day × channel". See `sql/schema.sql` for column types and relationships.
 
-## Charts from the EDA
-
-| Revenue over time | Cohort retention |
-|---|---|
-| ![monthly revenue](reports/figures/monthly_revenue.png) | ![cohort retention](reports/figures/cohort_retention.png) |
-
-| RFM segments | Marketing channels |
-|---|---|
-| ![rfm segments](reports/figures/rfm_segments.png) | ![channel performance](reports/figures/channel_performance.png) |
-
-Full notebook with code and all charts —
-[`notebooks/04_eda.ipynb`](notebooks/04_eda.ipynb).
 
 ## SQL
 
