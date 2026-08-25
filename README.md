@@ -65,9 +65,6 @@ Data-Project/
 ## Data model (star schema)
 
 ```mermaid
-## Data model (star schema)
-
-```mermaid
 erDiagram
     dim_customers ||--o{ fact_orders : customer_id
     dim_products  ||--o{ fact_orders : product_id
