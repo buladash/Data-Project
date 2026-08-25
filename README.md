@@ -1,50 +1,37 @@
 # E-commerce Sales Analytics
 
-An end-to-end Junior+ data analyst portfolio project: from raw "dirty" data
-to a dashboard. Demonstrates the full analyst workflow — **Python/pandas**
-(data generation and cleaning, EDA) → **SQL** (star schema, business
-queries, window functions) → **Power BI** (dashboard, DAX).
+A Junior+ data analyst portfolio project built end-to-end from scratch:
+**Python/pandas** (synthetic data generation, cleaning) → **SQL** (star
+schema in SQLite, business queries with CTEs and window functions) →
+**Power BI** (data model, DAX measures, dashboard).
 
-> **About the data.** The dataset is synthetic (generated with a
-> Faker/NumPy script), but intentionally designed to be realistic: business
-> growth over time, seasonality (a sales peak in November-December), a
-> Pareto-style distribution of customer purchasing activity (a small share
-> of customers drives most of the revenue), plus a full set of typical data
-> quality issues (duplicates, missing values, inconsistent date formats,
-> incorrect types) — so there's something real to clean. No public dataset
-> was used, so the whole pipeline is reproducible offline and doesn't
-> depend on the availability of external sources.
+> **About the data.** The dataset is synthetic, generated with a
+> Faker/NumPy script and intentionally seeded with realistic data quality
+> issues (duplicate customers, missing values, inconsistent date formats,
+> a `$`-prefixed price column, negative values, orphaned foreign keys) so
+> there's something real to clean. It's a compact, learning-scale dataset
+> (100 customers, 30 products, 500 orders) rather than a large production
+> volume — the parameters in `python/generate_data.py` (`n` in each
+> `generate_*` call) can be scaled up if a bigger dataset is needed.
 
 ## Business problem
 
-An electronics e-commerce store, 2024–2025, wants to understand:
+An electronics e-commerce store wants to understand:
 
-1. How is revenue growing, and is there seasonality?
-2. Which products/categories generate the most revenue and margin?
-3. Which customers are most valuable (RFM), and how well are they retained?
-4. Which marketing channels have the best ROAS?
+1. How much revenue is it generating, and what's the average order size?
+2. Which products sell best?
+3. Which categories carry the highest prices/margins?
 
-## Key insights
+## What the data shows
 
-- **Revenue grew ~32% in 2025** vs. 2024 ($1.47M → $1.95M), with a clear
-  seasonal peak in November-December (Black Friday / holiday shopping) and
-  a dip in January-February.
-- **~20% of customers generate over half of revenue** (51%) — a classic
-  Pareto distribution of customer value, the `Champions` segment in the RFM
-  analysis. A priority for retention programs and personalized offers.
-- **Retention is weak: only ~6% of customers return within the first
-  month** after purchase, dropping to single digits by month 6 — a signal
-  that the store lacks an effective repeat-purchase / email-trigger
-  program.
-- **Referral and email are the most efficient paid channels by ROAS** (49x
-  and 31x respectively, vs. 3.5–4.5x for paid_search/social_media) —
-  marketing budget allocation is worth revisiting in their favor.
-- **15% of orders don't complete successfully** (9.4% cancelled + 5.0%
-  returned) — a growth area worth investigating further by category /
-  payment method.
-- The **Accessories** category leads by revenue, but margin should be
-  checked (see `sql/business_questions.sql`, questions #4 and #14) to
-  prioritize purchasing decisions.
+- **~$126K total revenue** across **430 completed orders**, average order
+  value **~$293**.
+- Top-selling product by revenue: **Tablets Guy Lite**.
+- **Gaming** has the most SKUs (14 of 30 products); **Electronics** carries
+  the highest average price per item.
+
+(Numbers reproducible via `sql/business_questions.sql`, queries 1–7, or
+the equivalent DAX measures in the Power BI model.)
 
 ## Tech stack
 
@@ -52,34 +39,32 @@ An electronics e-commerce store, 2024–2025, wants to understand:
 |---|---|
 | Data generation & cleaning | Python, pandas, NumPy, Faker |
 | Storage / business queries | SQLite, SQL (CTEs, window functions, joins, aggregations) |
-| EDA / visualization | pandas, matplotlib|
-| BI dashboard | Power BI (star schema, DAX, time intelligence) |
+| BI dashboard | Power BI (star schema, DAX) |
 
 ## Repository structure
 
 ```
 Data-Project/
 ├── python/
-│   ├── 01_generate_data.py         # generates synthetic "raw" data
-│   ├── 02_clean_data.py            # cleaning: duplicates, missing values, types, date formats
-│   ├── 03_build_star_schema.py     # star schema -> SQLite + CSVs for Power BI
-│   └── 04_export_powerbi_extras.py # RFM segments and cohort retention for Power BI
+│ ├── generate_data.py # synthetic "raw" data: customers, products, orders, order_items
+│ ├── clean_data.py # cleaning: duplicates, missing values, types, date formats
+│ └── build_star_schema.py # star schema -> SQLite (data/ecommerce.db) + CSVs for Power BI
 ├── sql/
-│   ├── schema.sql                  # star schema DDL
-│   └── business_questions.sql      # 16 business queries (RFM, cohorts, YoY, ROAS...)
+│ ├── schema.sql # star schema DDL
+│ └── business_questions.sql # business queries: aggregations, JOINs, CTEs, LAG/RANK/NTILE
 ├── powerbi/
-│   ├── README.md                   # step-by-step dashboard build, model, DAX measures
-│   └── theme.json                  # Power BI color theme
+│ └── README.md # data model, relationships, DAX measures, how the dashboard was built
 ├── data/
-│   ├── raw/                        # raw data with intentional issues (for cleaning practice)
-│   ├── processed/                  # cleaned tables
-│   ├── powerbi/                    # ready-to-import CSVs for Power BI
-│   └── ecommerce.db                # final SQLite database (star schema)
-└── reports/
-    ├── data_cleaning_report.md     # what was fixed during cleaning, and how
-    └── figures/                    # EDA charts (PNG)
+│ ├── raw/ # raw generated data (with intentional issues)
+│ ├── processed/ # cleaned tables
+│ ├── powerbi/ # CSVs exported for Power BI import
+│ └── ecommerce.db # SQLite database (star schema)
+└── requirements.txt
 ```
 
+## Data model (star schema)
+
+```mermaid
 ## Data model (star schema)
 
 ```mermaid
@@ -87,68 +72,65 @@ erDiagram
     dim_customers ||--o{ fact_orders : customer_id
     dim_products  ||--o{ fact_orders : product_id
     dim_date      ||--o{ fact_orders : date_key
-    dim_channel   ||--o{ fact_orders : channel_id
     dim_date      ||--o{ fact_marketing_spend : date_key
-    dim_channel   ||--o{ fact_marketing_spend : channel_id
 ```
 
-`fact_orders` is grained at "order line item", `fact_marketing_spend` at
-"day × channel". See `sql/schema.sql` for column types and relationships.
+fact_orders is grained at "order line item". dim_channel exists as a
+standalone dimension (channel names from dim_customers.acquisition_channel)
+but isn't yet wired into the fact tables — see powerbi/README.md for why.
+Full column list and types are in sql/schema.sql.
 
 
 ## SQL
 
-16 business queries in
-[`sql/business_questions.sql`](sql/business_questions.sql), covering:
-aggregations and `GROUP BY`, multi-table `JOIN`s, CTEs, window functions
-(`LAG`, `RANK`, `NTILE`, `SUM() OVER`), `CASE WHEN`, `HAVING`, subqueries.
-Example questions: RFM segmentation, cohort retention, MoM / cumulative
-revenue, ROAS by channel, customers at risk of churn.
+Business queries in sql/business_questions.sql,
+covering GROUP BY aggregations, multi-table JOINs, CTEs (WITH), and
+window functions (LAG, RANK, NTILE).
 
 ```sql
 -- example: month-over-month revenue growth, LAG window function
 WITH monthly_revenue AS (
-    SELECT d.year_month, SUM(f.line_revenue) AS revenue
+    SELECT d.year, d.month, ROUND(SUM(f.line_revenue), 2) AS revenue
     FROM fact_orders f JOIN dim_date d ON f.date_key = d.date_key
-    WHERE f.order_status = 'completed'
-    GROUP BY d.year_month
+    WHERE f.status = 'completed'
+    GROUP BY d.year, d.month
 )
-SELECT year_month, revenue,
-       ROUND((revenue - LAG(revenue) OVER (ORDER BY year_month)) * 100.0
-             / LAG(revenue) OVER (ORDER BY year_month), 1) AS mom_growth_pct
-FROM monthly_revenue ORDER BY year_month;
+SELECT year, month, revenue,
+       ROUND((revenue - LAG(revenue) OVER (ORDER BY year, month)) * 100.0
+             / LAG(revenue) OVER (ORDER BY year, month), 1) AS mom_growth_pct
+FROM monthly_revenue ORDER BY year, month;
 ```
 
 ## Power BI
 
-All data is fully prepared in `data/powerbi/` (ready-made star schema +
-precomputed RFM segments and cohort retention). The full dashboard-build
-guide — relationship model, DAX measures, a 4-page layout — is in
-[`powerbi/README.md`](powerbi/README.md). The `.pbix` file isn't included
-in the repo (binary format, requires Power BI Desktop on Windows) — the
-files and guide let you build the dashboard in 30–60 minutes.
+Data is exported to data/powerbi/ as flat CSVs ready to import. The
+dashboard currently has one page (Overview): KPI cards for total revenue,
+order count and average order value, a monthly revenue trend chart, and a
+top-10-products-by-revenue chart. Full build steps — relationships, DAX
+measures, and a couple of gotchas hit along the way (Power BI's automatic
+date hierarchy, a data-type/formatting bug on one measure) — are in
+powerbi/README.md. The .pbix file isn't included
+in the repo (binary format, requires Power BI Desktop).
 
 ## How to reproduce
 
 ```bash
 pip install -r requirements.txt
 
-python python/01_generate_data.py           # -> data/raw/*.csv
-python python/02_clean_data.py               # -> data/processed/*.csv, reports/data_cleaning_report.md
-python python/03_build_star_schema.py        # -> data/ecommerce.db, data/powerbi/*.csv
-python python/04_export_powerbi_extras.py    # -> data/powerbi/dim_customer_rfm.csv, fact_cohort_retention.csv
-
-jupyter nbconvert --to notebook --execute --inplace notebooks/04_eda.ipynb
+python python/generate_data.py       # -> data/raw/*.csv
+python python/clean_data.py          # -> data/processed/*.csv
+python python/build_star_schema.py   # -> data/ecommerce.db, data/powerbi/*.csv
 ```
 
-SQL queries: open `data/ecommerce.db` with any SQL client (DBeaver,
-DataGrip, the SQLite extension for VS Code) and run
-`sql/business_questions.sql`.
+SQL queries: open data/ecommerce.db with any SQL client (DBeaver,
+DataGrip, the SQLite extension for VS Code, or PyCharm's built-in
+Database tool) and run sql/business_questions.sql.
 
 ## Next steps
 
-- Add a revenue forecast (Prophet / statsmodels) based on `dim_date` +
-  `fact_orders`.
-- A/B-test the effect of a marketing channel on retention.
-- Move to PostgreSQL + dbt for a more "production-like" transformation
-  pipeline.
+- Add a channel_id to orders so dim_channel connects to the star schema
+properly, and build a marketing/ROAS page.
+- Add customer-level RFM segmentation and cohort retention (SQL and/or
+Power BI).
+- Scale up the generated dataset (more customers/orders) for a richer
+dashboard.
